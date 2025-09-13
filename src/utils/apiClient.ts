@@ -58,7 +58,7 @@ export class ApiClient {
       const formData = new FormData();
       formData.append('audio', audioBlob, 'recording.webm');
 
-      const response = await this.axiosInstance.post('/transcribe', formData, {
+      const response = await this.axiosInstance.post('/api/transcribe', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

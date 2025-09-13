@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Microfrontend Integration Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .iframe-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 600px;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        input, button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+        }
+        .log {
+            background-color: #f1f3f4;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 Konnektaro Recorder Integration Example</h1>
+        
+        <div class="controls">
+            <input type="url" id="apiUrl" placeholder="API URL" value="https://your-api.com">
+            <input type="text" id="token" placeholder="Authentication Token" value="your-token-here">
+            <input type="number" id="timeout" placeholder="Timeout (ms)" value="60000" min="5000" max="300000">
+            <button onclick="loadMicrofrontend()">Load Recorder</button>
+            <button onclick="clearResults()">Clear Results</button>
+        </div>
+
+        <div id="status">Ready to load microfrontend...</div>
+
+        <div class="iframe-container">
+            <iframe id="microfrontend" src="about:blank" title="Audio Recorder Microfrontend"></iframe>
+        </div>
+
+        <div id="result" class="result" style="display: none;">
+            <h3>Latest Transcription:</h3>
+            <div id="transcription"></div>
+        </div>
+
+        <div id="log" class="log">
+            <h4>Event Log:</h4>
+            <div id="logContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const iframe = document.getElementById('microfrontend');
+        const status = document.getElementById('status');
+        const result = document.getElementById('result');
+        const transcription = document.getElementById('transcription');
+        const logContent = document.getElementById('logContent');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContent.innerHTML += `[${timestamp}] ${message}\n`;
+            logContent.scrollTop = logContent.scrollHeight;
+            console.log(message);
+        }
+
+        function loadMicrofrontend() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const token = document.getElementById('token').value;
+            const timeout = parseInt(document.getElementById('timeout').value) || 60000;
+
+            if (!apiUrl || !token) {
+                alert('Please provide both API URL and token');
+                return;
+            }
+
+            // Method 1: Set props before loading
+            window.microfrontendProps = {
+                token: token,
+                apiUrl: apiUrl,
+                timeout: timeout
+            };
+
+            // Load the microfrontend
+            iframe.src = 'http://localhost:3000';
+            status.textContent = 'Loading microfrontend...';
+            log('Loading microfrontend with props: ' + JSON.stringify(window.microfrontendProps));
+
+            // Alternative Method 2: Use URL parameters
+            // iframe.src = `http://localhost:3000/?token=${encodeURIComponent(token)}&apiUrl=${encodeURIComponent(apiUrl)}&timeout=${timeout}`;
+        }
+
+        function clearResults() {
+            transcription.textContent = '';
+            result.style.display = 'none';
+            logContent.innerHTML = '<h4>Event Log:</h4>\n';
+            log('Results cleared');
+        }
+
+        // Listen for messages from the microfrontend
+        window.addEventListener('message', (event) => {
+            // In a real application, you should verify the origin for security
+            // if (event.origin !== 'http://localhost:3000') return;
+
+            log('Received message: ' + JSON.stringify(event.data));
+
+            if (event.data.type === 'TRANSCRIPTION_COMPLETE') {
+                const text = event.data.transcription;
+                transcription.textContent = text;
+                result.style.display = 'block';
+                status.textContent = 'Transcription completed successfully!';
+                log('Transcription completed: ' + text.substring(0, 100) + '...');
+            } else if (event.data.type === 'TRANSCRIPTION_ERROR') {
+                const error = event.data.error;
+                status.textContent = 'Transcription failed: ' + error;
+                log('Transcription error: ' + error);
+            }
+        });
+
+        // Handle iframe load events
+        iframe.addEventListener('load', () => {
+            status.textContent = 'Microfrontend loaded successfully';
+            log('Iframe loaded');
+        });
+
+        iframe.addEventListener('error', () => {
+            status.textContent = 'Failed to load microfrontend';
+            log('Iframe load error');
+        });
+
+        // Initial setup
+        log('Integration example ready');
+        log('Make sure the Next.js development server is running on http://localhost:3000');
+    </script>
+</body>
+</html>

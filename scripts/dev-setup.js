@@ -51,3 +51,4 @@ console.log('   - examples/integration-example.html');
 console.log('   - README.md');
 
 console.log('\n✨ Setup complete! Happy coding!');
+
