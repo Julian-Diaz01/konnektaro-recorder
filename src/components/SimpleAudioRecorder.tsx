@@ -199,7 +199,7 @@ console.log(isDisabled(), isError())
       )}
 
       {/* Bottom info button with tooltip */}
-      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 relative group z-10">
+      <div className="bottom-8 left-1/2 transform -translate-x-1/2 relative group z-10">
         <button
           className="w-12 h-12 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 flex items-center justify-center"
         >
