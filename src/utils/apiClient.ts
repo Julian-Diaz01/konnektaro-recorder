@@ -1,10 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
-
-export interface ApiClientConfig {
-  baseUrl: string;
-  token: string;
-  timeout?: number;
-}
+import axios from 'axios';
 
 export interface TranscriptionResponse {
   transcription: string;
@@ -12,118 +6,86 @@ export interface TranscriptionResponse {
   error?: string;
 }
 
-export class ApiClient {
-  private axiosInstance: AxiosInstance;
-  private baseUrl: string;
+// Simple function-based API client
+export const transcribeAudio = async (
+  audioBlob: Blob, 
+  apiUrl: string, 
+  token: string, 
+  timeout: number = 30000
+): Promise<TranscriptionResponse> => {
+  try {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.webm');
 
-  constructor(config: ApiClientConfig) {
-    this.baseUrl = config.baseUrl;
+    console.log('Sending transcription request to:', apiUrl);
     
-    this.axiosInstance = axios.create({
-      baseURL: config.baseUrl,
-      timeout: config.timeout || 30000, // 30 seconds default timeout
+    const response = await axios.post(`${apiUrl}/api/transcribe`, formData, {
       headers: {
-        'Authorization': `Bearer ${config.token}`,
-        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
       },
+      timeout,
     });
 
-    // Request interceptor for logging
-    this.axiosInstance.interceptors.request.use(
-      (config: any) => {
-        console.log(`Making ${config.method?.toUpperCase()} request to:`, config.url);
-        return config;
-      },
-      (error: any) => {
-        console.error('Request interceptor error:', error);
-        return Promise.reject(error);
-      }
-    );
+    console.log('Transcription response:', response.data);
 
-    // Response interceptor for error handling
-    this.axiosInstance.interceptors.response.use(
-      (response: any) => {
-        console.log(`Response received:`, response.status, response.statusText);
-        return response;
-      },
-      (error: AxiosError) => {
-        console.error('Response interceptor error:', error.response?.status, error.message);
-        return Promise.reject(error);
-      }
-    );
-  }
+    // Handle nested data structure
+    const data = response.data.data || response.data;
+    const transcription = data.transcription || data.text || '';
+    
+    console.log('Extracted data:', data);
+    console.log('Extracted transcription:', transcription);
 
-  async transcribeAudio(audioBlob: Blob): Promise<TranscriptionResponse> {
-    try {
-      const formData = new FormData();
-      formData.append('audio', audioBlob, 'recording.webm');
-
-      const response = await this.axiosInstance.post('/api/transcribe', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      return {
-        transcription: response.data.transcription || '',
-        success: true,
-      };
-    } catch (error) {
-      console.error('Transcription API error:', error);
-      
-      let errorMessage = 'Unknown error occurred';
-      
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError;
-        
-        if (axiosError.response) {
-          // Server responded with error status
-          const status = axiosError.response.status;
-          const data = axiosError.response.data as any;
-          errorMessage = data?.error || data?.message || `HTTP ${status}: ${axiosError.response.statusText}`;
-        } else if (axiosError.request) {
-          // Request was made but no response received
-          errorMessage = 'Network error - no response from server';
-        } else {
-          // Something else happened
-          errorMessage = axiosError.message;
-        }
-      } else if (error instanceof Error) {
+    return {
+      transcription,
+      success: true,
+    };
+  } catch (error) {
+    console.error('Transcription error:', error);
+    
+    let errorMessage = 'Unknown error occurred';
+    
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        // Server responded with error status
+        const data = error.response.data;
+        errorMessage = data?.error || data?.message || `HTTP ${error.response.status}`;
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMessage = 'Network error - no response from server';
+      } else {
+        // Something else happened
         errorMessage = error.message;
       }
-
-      return {
-        transcription: '',
-        success: false,
-        error: errorMessage,
-      };
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
     }
-  }
 
-  async testConnection(): Promise<boolean> {
-    try {
-      await this.axiosInstance.get('/api/health');
-      return true;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError;
-        // Consider 404 as a valid response (endpoint might not exist)
-        if (axiosError.response?.status === 404) {
-          return true;
-        }
+    return {
+      transcription: '',
+      success: false,
+      error: errorMessage,
+    };
+  }
+};
+
+// Simple connection test
+export const testConnection = async (apiUrl: string, token: string): Promise<boolean> => {
+  try {
+    await axios.get(`${apiUrl}/api/health`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      timeout: 5000,
+    });
+    return true;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      // Consider 404 as a valid response (endpoint might not exist)
+      if (error.response?.status === 404) {
+        return true;
       }
-      return false;
     }
+    return false;
   }
-
-  // Method to update token without recreating the instance
-  updateToken(newToken: string): void {
-    this.axiosInstance.defaults.headers['Authorization'] = `Bearer ${newToken}`;
-  }
-
-  // Method to update base URL
-  updateBaseUrl(newBaseUrl: string): void {
-    this.baseUrl = newBaseUrl;
-    this.axiosInstance.defaults.baseURL = newBaseUrl;
-  }
-}
+};

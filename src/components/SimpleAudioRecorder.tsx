@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { ApiClient, TranscriptionResponse } from '@/utils/apiClient';
+import { transcribeAudio, testConnection, TranscriptionResponse } from '@/utils/apiClient';
 
 interface SimpleAudioRecorderProps {
   apiUrl: string;
@@ -20,8 +20,8 @@ export const SimpleAudioRecorder: React.FC<SimpleAudioRecorderProps> = ({
   onError,
 }) => {
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [apiClient, setApiClient] = useState<ApiClient | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+  const [transcriptionPreview, setTranscriptionPreview] = useState<string>('');
 
   const {
     isRecording,
@@ -33,40 +33,34 @@ export const SimpleAudioRecorder: React.FC<SimpleAudioRecorderProps> = ({
     requestPermission,
   } = useAudioRecorder();
 
-  // Initialize API client when props change
+  // Test connection when props change
   useEffect(() => {
     if (apiUrl && token) {
-      const client = new ApiClient({ 
-        baseUrl: apiUrl, 
-        token,
-        timeout
-      });
-      setApiClient(client);
-      
-      // Test connection
-      client.testConnection().then(isConnected => {
+      testConnection(apiUrl, token).then(isConnected => {
         setConnectionStatus(isConnected ? 'connected' : 'error');
       }).catch(() => {
         setConnectionStatus('error');
       });
     }
-  }, [apiUrl, token, timeout]);
+  }, [apiUrl, token]);
 
   // Auto-transcribe when recording stops
   useEffect(() => {
-    if (audioBlob && apiClient && connectionStatus === 'connected') {
+    if (audioBlob && connectionStatus === 'connected') {
       handleTranscribe();
     }
-  }, [audioBlob, apiClient, connectionStatus]);
+  }, [audioBlob, connectionStatus]);
 
   const handleTranscribe = async () => {
-    if (!audioBlob || !apiClient) return;
+    if (!audioBlob || !apiUrl || !token) return;
 
     setIsTranscribing(true);
+    setTranscriptionPreview(''); // Clear previous preview
     try {
-      const result: TranscriptionResponse = await apiClient.transcribeAudio(audioBlob);
+      const result: TranscriptionResponse = await transcribeAudio(audioBlob, apiUrl, token, timeout);
       
       if (result.success) {
+        setTranscriptionPreview(result.transcription);
         onTranscriptionComplete?.(result.transcription);
       } else {
         const errorMsg = result.error || 'Transcription failed';
@@ -104,11 +98,11 @@ export const SimpleAudioRecorder: React.FC<SimpleAudioRecorderProps> = ({
     if (isTranscribing) return 'Processing audio...';
     return 'Speak now';
   };
-
+console.log(isDisabled(), isError())
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-white to-blue-50 p-4">
+    <div className="relative min-h-screen bg-gradient-to-b from-white to-blue-50 p-4">
       {/* Top instruction */}
-      <div className="mb-12 mt-8">
+      <div className="flex justify-center items-center mb-12 mt-8">
         <button
             className={`
               px-8 py-3 rounded-xl font-semibold text-lg transition-all duration-300
@@ -123,8 +117,8 @@ export const SimpleAudioRecorder: React.FC<SimpleAudioRecorderProps> = ({
         </button>
       </div>
 
-      {/* Center microphone with ripple effect */}
-      <div className="flex-1 flex items-center justify-center">
+      {/* Fixed center microphone with ripple effect */}
+      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
         <div className="relative">
           {/* Ripple Effect Container */}
           <div className="relative flex items-center justify-center">
@@ -145,7 +139,7 @@ export const SimpleAudioRecorder: React.FC<SimpleAudioRecorderProps> = ({
                 relative z-10 w-40 h-40 rounded-full transition-all duration-300 transform
                 ${isError() 
                   ? 'bg-primary-60 shadow-md opacity-50 cursor-not-allowed'
-                  : 'bg-primary-60 shadow-md hover:shadow-lg active:scale-95'
+                  : 'bg-purple-500 shadow-md hover:shadow-lg active:scale-95'
                 }
               `}
             >
@@ -159,10 +153,9 @@ export const SimpleAudioRecorder: React.FC<SimpleAudioRecorderProps> = ({
                   </svg>
                 ) : isTranscribing ? (
                   // Transcribing state - loading spinner
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-1/2 h-1/2 m-autoanimate-spin">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" opacity="0.3"/>
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
-                    <path d="M12 2v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <svg viewBox="0 0 24 24" className="w-1/2 h-1/2 m-auto animate-spin">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.3"/>
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
                   </svg>
                 ) : hasPermission === false ? (
                   // No permission state - microphone with X
@@ -184,8 +177,29 @@ export const SimpleAudioRecorder: React.FC<SimpleAudioRecorderProps> = ({
         </div>
       </div>
 
+      {/* Transcription Preview - Fixed position */}
+      {transcriptionPreview && (
+        <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 z-10 max-w-2xl w-full px-4">
+          <div className="bg-white rounded-xl shadow-lg border-2 border-gray-300 p-6">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-green-600">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-black mb-2">Transcription Preview</h3>
+                <p className="text-black text-base leading-relaxed font-medium">{transcriptionPreview}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bottom info button with tooltip */}
-      <div className="mb-8 relative group">
+      <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 relative group z-10">
         <button
           className="w-12 h-12 bg-blue-500 text-white rounded-full shadow-lg hover:bg-blue-600 active:bg-blue-700 transition-all duration-200 flex items-center justify-center"
         >
