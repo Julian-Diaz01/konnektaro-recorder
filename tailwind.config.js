@@ -8,6 +8,17 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Brand colors from Konnektaro
+        purple: {
+          200: '#e9d5ff', // Light purple for ripple
+          300: '#d8b4fe', // Medium light purple for ripple
+          400: '#c084fc', // Medium purple for ripple
+          500: '#933DA7', // Primary brand color
+          600: '#7a2d8a', // Darker shade for recording state
+        },
+        // Primary brand colors with transparency
+        'primary-60': '#933DA760', // Primary with 60% opacity
+        'primary': '#933DA7', // Primary brand color
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',

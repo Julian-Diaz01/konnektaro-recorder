@@ -1,18 +1,19 @@
 # Konnektaro Audio Recorder Microfrontend
 
-A Next.js TypeScript microfrontend for audio recording and transcription, designed to be embedded in larger applications.
+A minimal Next.js TypeScript microfrontend for audio recording and transcription, designed to be embedded in larger applications.
 
 ## Features
 
-- 🎤 **Audio Recording**: High-quality audio recording with WebRTC
+- 🎤 **Simple Audio Recording**: Clean microphone interface with visual feedback
 - 📱 **Cross-Platform**: Works on both mobile and web browsers
 - 🔐 **Token Authentication**: Secure API communication with bearer tokens
-- 🎨 **Modern UI**: Beautiful, responsive design with Tailwind CSS
+- 🎨 **Minimal UI**: Just a microphone icon with ripple effect during recording
 - 🔌 **Microfrontend Ready**: Easy integration with parent applications
-- ⚡ **Real-time**: Live recording timer and audio playback
+- ⚡ **Auto-Transcription**: Automatically transcribes when recording stops
 - 🛡️ **Permission Handling**: Graceful microphone permission management
 - 📡 **Axios HTTP Client**: Robust HTTP requests with interceptors and error handling
 - ⏱️ **Configurable Timeouts**: Customizable request timeouts for different scenarios
+- 🔄 **Auto-Configuration**: Handles token and URL configuration automatically
 
 ## Quick Start
 
@@ -96,15 +97,15 @@ The microfrontend expects your transcription API to:
 ```
 src/
 ├── app/
-│   ├── globals.css          # Global styles with Tailwind
-│   ├── layout.tsx           # Root layout component
-│   └── page.tsx             # Main page component
+│   ├── globals.css              # Global styles with Tailwind + ripple animations
+│   ├── layout.tsx               # Root layout component
+│   └── page.tsx                 # Main page component with auto-configuration
 ├── components/
-│   └── AudioRecorder.tsx    # Main recording component
+│   └── SimpleAudioRecorder.tsx  # Minimal microphone interface component
 ├── hooks/
-│   └── useAudioRecorder.ts  # Audio recording logic
+│   └── useAudioRecorder.ts      # Simplified audio recording logic
 └── utils/
-    └── apiClient.ts         # Axios-based API communication utilities
+    └── apiClient.ts             # Axios-based API communication utilities
 ```
 
 ## Axios Features

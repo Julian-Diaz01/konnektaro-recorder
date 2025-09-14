@@ -4,7 +4,6 @@ import { useState, useRef, useCallback } from 'react';
 
 export interface AudioRecorderState {
   isRecording: boolean;
-  isPaused: boolean;
   recordingTime: number;
   hasPermission: boolean | null;
   error: string | null;
@@ -15,15 +14,12 @@ export interface AudioRecorderState {
 export interface AudioRecorderControls {
   startRecording: () => Promise<void>;
   stopRecording: () => void;
-  pauseRecording: () => void;
-  resumeRecording: () => void;
   resetRecording: () => void;
   requestPermission: () => Promise<boolean>;
 }
 
 export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls => {
   const [isRecording, setIsRecording] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -115,7 +111,6 @@ export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls =
 
       mediaRecorder.start(1000); // Collect data every second
       setIsRecording(true);
-      setIsPaused(false);
       setRecordingTime(0);
       startTimer();
 
@@ -129,26 +124,9 @@ export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls =
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      setIsPaused(false);
       stopTimer();
     }
   }, [isRecording, stopTimer]);
-
-  const pauseRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording && !isPaused) {
-      mediaRecorderRef.current.pause();
-      setIsPaused(true);
-      stopTimer();
-    }
-  }, [isRecording, isPaused, stopTimer]);
-
-  const resumeRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording && isPaused) {
-      mediaRecorderRef.current.resume();
-      setIsPaused(false);
-      startTimer();
-    }
-  }, [isRecording, isPaused, startTimer]);
 
   const resetRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
@@ -156,7 +134,6 @@ export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls =
     }
     
     setIsRecording(false);
-    setIsPaused(false);
     setRecordingTime(0);
     setAudioBlob(null);
     
@@ -171,7 +148,6 @@ export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls =
 
   return {
     isRecording,
-    isPaused,
     recordingTime,
     hasPermission,
     error,
@@ -179,8 +155,6 @@ export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls =
     audioUrl,
     startRecording,
     stopRecording,
-    pauseRecording,
-    resumeRecording,
     resetRecording,
     requestPermission,
   };
