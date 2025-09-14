@@ -102,7 +102,7 @@ export class ApiClient {
 
   async testConnection(): Promise<boolean> {
     try {
-      await this.axiosInstance.get('api/health');
+      await this.axiosInstance.get('/api/health');
       return true;
     } catch (error) {
       if (axios.isAxiosError(error)) {
