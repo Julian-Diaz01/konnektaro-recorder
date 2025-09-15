@@ -225,7 +225,7 @@ MIT License - see LICENSE file for details.
 
 ## Changelog
 
-### 1.0.3
+### 1.0.4
 - Initial release
 - React component for speech-to-text conversion
 - Support for required environment variables

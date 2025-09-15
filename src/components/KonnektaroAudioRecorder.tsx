@@ -95,30 +95,6 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
         return;
       }
 
-      // Priority 2: Environment variables (for build-time configuration)
-      const envApiUrl = typeof process !== 'undefined' && process.env ? process.env.NEXT_PUBLIC_KONNEKTARO_API_URL : undefined;
-      const envToken = typeof process !== 'undefined' && process.env ? process.env.NEXT_PUBLIC_KONNEKTARO_TOKEN : undefined;
-
-      if (envApiUrl && envToken) {
-        setApiUrl(envApiUrl);
-        setToken(envToken);
-        setIsConfigured(true);
-        setError('');
-        return;
-      }
-
-      // Priority 3: Partial props with env fallback
-      const finalApiUrl = propApiUrl || envApiUrl;
-      const finalToken = propToken || envToken;
-
-      if (finalApiUrl && finalToken) {
-        setApiUrl(finalApiUrl);
-        setToken(finalToken);
-        setIsConfigured(true);
-        setError('');
-        return;
-      }
-
       // Configuration error
       setIsConfigured(false);
       setError('Missing required configuration. Please provide apiUrl and token via props or environment variables.');
@@ -190,15 +166,6 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
     isTranscribing || 
     connectionStatus === 'checking';
 
-  const getInstructionText = () => {
-    if (connectionStatus === 'checking') return 'Connecting...';
-    if (connectionStatus === 'error') return 'Connection failed';
-    if (hasPermission === false) return 'Microphone access denied';
-    if (isRecording) return 'Recording... Tap to stop';
-    if (isTranscribing) return 'Processing audio...';
-    return 'Tap to start recording';
-  };
-
   if (!isConfigured) {
     return (
       <div className={`konnektaro-audio-recorder-error ${className || ''}`}>
@@ -268,28 +235,37 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
               onClick={handleMicrophoneClick}
               disabled={isDisabled()}
               className={`
-                relative z-10 w-24 h-24 rounded-full transition-all duration-300 transform
+                relative z-10 w-40 h-40 rounded-full transition-all duration-300 transform
                 ${hasPermission === false || connectionStatus === 'error'
-                  ? 'bg-gray-300 shadow-md opacity-50 cursor-not-allowed'
+                  ? 'bg-primary-60 shadow-md opacity-50 cursor-not-allowed'
                   : 'bg-purple-500 shadow-md hover:shadow-lg active:scale-95'
                 }
               `}
             >
-              <div className="text-white text-3xl transition-all duration-300">
+              {/* Microphone Icon - Always White */}
+              <div className="text-white text-6xl transition-all duration-300">
                 {isRecording ? (
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 m-auto">
-                    <rect x="6" y="6" width="12" height="12" rx="2"/>
+                  // Recording state - microphone with waves
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-1/2 h-1/2 m-auto">
+                    <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                    <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                   </svg>
                 ) : isTranscribing ? (
-                  <div className="w-8 h-8 m-auto animate-spin border-2 border-white border-t-transparent rounded-full"></div>
+                  // Transcribing state - loading spinner
+                  <svg viewBox="0 0 24 24" className="w-1/2 h-1/2 m-auto animate-spin">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" opacity="0.3"/>
+                    <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round"/>
+                  </svg>
                 ) : hasPermission === false ? (
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 m-auto">
+                  // No permission state - microphone with X
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-1/2 h-1/2 m-auto">
                     <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
                     <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                     <path d="M1 1l22 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                   </svg>
                 ) : (
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 m-auto">
+                  // Default state - regular microphone
+                  <svg viewBox="0 0 24 24" fill="currentColor" className="w-1/2 h-1/2 m-auto">
                     <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
                     <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                   </svg>
@@ -298,48 +274,6 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
             </button>
           </div>
         </div>
-
-        {/* Instruction text */}
-        <div className="text-center mb-6">
-          <p className="text-lg font-medium text-gray-700 mb-2">
-            {getInstructionText()}
-          </p>
-          {(error || recordingError) && (
-            <p className="text-sm text-red-600 mt-2">{error || recordingError}</p>
-          )}
-        </div>
-
-        {/* Action buttons */}
-        {audioBlob && !isTranscribing && (
-          <div className="flex gap-3">
-            <button
-              onClick={handleTranscribe}
-              className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              Transcribe
-            </button>
-            <button
-              onClick={resetRecording}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg flex items-center gap-2 transition-colors"
-            >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-              </svg>
-              Record Again
-            </button>
-          </div>
-        )}
-
-        {/* Audio preview */}
-        {audioBlob && (
-          <div className="mt-6 w-full max-w-sm">
-            <p className="text-sm text-gray-600 mb-2">Audio Preview:</p>
-            <audio controls className="w-full" src={URL.createObjectURL(audioBlob)} />
-          </div>
-        )}
       </div>
     </div>
   );
