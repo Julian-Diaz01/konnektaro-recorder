@@ -1,6 +1,6 @@
 {
   "name": "@konnektaro/speech-to-text",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A React component for speech-to-text conversion with required environment variables",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
