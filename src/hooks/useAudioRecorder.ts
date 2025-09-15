@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useRef, useCallback } from 'react';
 
 export interface AudioRecorderState {
@@ -28,7 +26,7 @@ export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls =
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startTimer = useCallback(() => {
     timerRef.current = setInterval(() => {

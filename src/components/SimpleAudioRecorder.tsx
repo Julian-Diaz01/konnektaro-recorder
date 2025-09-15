@@ -1,8 +1,6 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
-import { useAudioRecorder } from '@/hooks/useAudioRecorder';
-import { transcribeAudio, testConnection, TranscriptionResponse } from '@/utils/apiClient';
+import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import { transcribeAudio, testConnection, TranscriptionResponse } from '../utils/apiClient';
 
 interface SimpleAudioRecorderProps {
   apiUrl: string;
@@ -98,19 +96,13 @@ export const SimpleAudioRecorder: React.FC<SimpleAudioRecorderProps> = ({
     if (isTranscribing) return 'Processing audio...';
     return 'Speak now';
   };
-console.log(isDisabled(), isError())
   return (
     <div className="relative min-h-screen bg-gradient-to-b from-white to-blue-50 p-4">
       {/* Top instruction */}
       <div className="flex justify-center items-center mb-12 mt-8">
         <button
             className={`
-              px-8 py-3 rounded-xl font-semibold text-lg transition-all duration-300
-              ${isRecording || isDisabled()
-                ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
-                : 'bg-purple-500 text-white hover:bg-purple-600 active:bg-purple-700 shadow-lg hover:shadow-xl'
-              }
-            `}
+              px-8 py-3 rounded-xl font-semibold text-lg transition-all duration-300 text-gray-600 cursor-not-allowed`}
           disabled={isRecording || isDisabled()}
         >
           {getInstructionText()}
@@ -179,7 +171,7 @@ console.log(isDisabled(), isError())
 
       {/* Transcription Preview - Fixed position */}
       {transcriptionPreview && (
-        <div className="fixed bottom-32 left-1/2 transform -translate-x-1/2 z-10 max-w-2xl w-full px-4">
+        <div className="fixed bottom-s left-1/2 transform -translate-x-1/2 z-10 max-w-2xl w-full px-4">
           <div className="bg-white rounded-xl shadow-lg border-2 border-gray-300 p-6">
             <div className="flex items-start space-x-3">
               <div className="flex-shrink-0">
