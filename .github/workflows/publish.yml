@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish (e.g., 1.0.2)'
+        description: 'Version to publish (e.g., 1.0.3)'
         required: true
         type: string
 
@@ -38,27 +38,3 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          name: Release ${{ github.ref_name }}
-          body: |
-            ## 🎉 Release ${{ github.ref_name }}
-            
-            Automated release of @konnektaro/speech-to-text
-            
-            ### Changes
-            - Published to npm registry
-            - Built with latest dependencies
-            - TypeScript compilation successful
-            
-            ### Installation
-            ```bash
-            npm install @konnektaro/speech-to-text@${{ github.ref_name }}
-            ```
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

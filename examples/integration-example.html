@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Microfrontend Integration Example</title>
+    <title>Konnektaro Audio Recorder Integration Example</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -18,17 +18,6 @@
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-        }
-        .iframe-container {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            height: 600px;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
         }
         .controls {
             display: flex;
@@ -68,43 +57,132 @@
             max-height: 200px;
             overflow-y: auto;
         }
+        .component-container {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 600px;
+            margin: 20px 0;
+        }
+        .demo-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .code-block {
+            background-color: #f8f8f8;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎤 Konnektaro Simple Audio Recorder Integration Example</h1>
+        <h1>🎤 Konnektaro Audio Recorder Integration Example</h1>
         
-        <div class="controls">
-            <input type="url" id="apiUrl" placeholder="API URL" value="https://your-api.com">
-            <input type="text" id="token" placeholder="Authentication Token" value="your-token-here">
-            <input type="number" id="timeout" placeholder="Timeout (ms)" value="60000" min="5000" max="300000">
-            <button onclick="loadMicrofrontend()">Load Recorder</button>
-            <button onclick="clearResults()">Clear Results</button>
+        <div class="demo-section">
+            <h2>React Component Integration</h2>
+            <p>This example shows how to integrate the <code>KonnektaroAudioRecorder</code> component in a React application.</p>
+            
+            <h3>Installation:</h3>
+            <div class="code-block">
+npm install @konnektaro/speech-to-text
+            </div>
+
+            <h3>Basic Usage:</h3>
+            <div class="code-block">
+import React from 'react';
+import { KonnektaroAudioRecorder } from '@konnektaro/speech-to-text';
+
+function App() {
+  const handleTranscriptionComplete = (transcription) => {
+    console.log('Transcription:', transcription);
+  };
+
+  const handleError = (error) => {
+    console.error('Error:', error);
+  };
+
+  return (
+    &lt;KonnektaroAudioRecorder
+      apiUrl="https://your-api.com"
+      token="your-auth-token"
+      onTranscriptionComplete={handleTranscriptionComplete}
+      onError={handleError}
+    /&gt;
+  );
+}
+            </div>
+
+            <h3>Props:</h3>
+            <ul>
+                <li><strong>apiUrl</strong> (string): API URL for transcription service - REQUIRED</li>
+                <li><strong>token</strong> (string): Authentication token for API requests - REQUIRED</li>
+                <li><strong>timeout</strong> (number): Request timeout in milliseconds (default: 60000)</li>
+                <li><strong>onTranscriptionComplete</strong> (function): Callback when transcription is completed</li>
+                <li><strong>onError</strong> (function): Callback when an error occurs</li>
+                <li><strong>className</strong> (string): Custom CSS class name for styling</li>
+            </ul>
         </div>
 
-        <div id="status">Ready to load microfrontend...</div>
+        <div class="demo-section">
+            <h2>Live Demo</h2>
+            <p>Configure the component below and test the audio recording functionality:</p>
+            
+            <div class="controls">
+                <input type="url" id="apiUrl" placeholder="API URL" value="https://api.openai.com/v1">
+                <input type="text" id="token" placeholder="Authentication Token" value="your-token-here">
+                <input type="number" id="timeout" placeholder="Timeout (ms)" value="60000" min="5000" max="300000">
+                <button onclick="loadComponent()">Load Component</button>
+                <button onclick="clearResults()">Clear Results</button>
+            </div>
 
-        <div class="iframe-container">
-            <iframe id="microfrontend" src="about:blank" title="Audio Recorder Microfrontend"></iframe>
+            <div id="status">Ready to load component...</div>
+
+            <div class="component-container" id="componentContainer">
+                <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;">
+                    Click "Load Component" to see the audio recorder
+                </div>
+            </div>
+
+            <div id="result" class="result" style="display: none;">
+                <h3>Latest Transcription:</h3>
+                <div id="transcription"></div>
+            </div>
+
+            <div id="log" class="log">
+                <h4>Event Log:</h4>
+                <div id="logContent"></div>
+            </div>
         </div>
 
-        <div id="result" class="result" style="display: none;">
-            <h3>Latest Transcription:</h3>
-            <div id="transcription"></div>
-        </div>
-
-        <div id="log" class="log">
-            <h4>Event Log:</h4>
-            <div id="logContent"></div>
+        <div class="demo-section">
+            <h2>Features</h2>
+            <ul>
+                <li>✅ <strong>Direct Integration:</strong> No iframe restrictions - microphone permissions work perfectly</li>
+                <li>✅ <strong>Automatic Transcription:</strong> Audio is automatically sent to your API after recording</li>
+                <li>✅ <strong>Real-time Status:</strong> Connection status and recording state indicators</li>
+                <li>✅ <strong>Error Handling:</strong> Comprehensive error handling and user feedback</li>
+                <li>✅ <strong>Responsive Design:</strong> Works on desktop and mobile devices</li>
+                <li>✅ <strong>Audio Preview:</strong> Listen to recorded audio before transcription</li>
+                <li>✅ <strong>Flexible Configuration:</strong> Support for props and environment variables</li>
+            </ul>
         </div>
     </div>
 
     <script>
-        const iframe = document.getElementById('microfrontend');
         const status = document.getElementById('status');
         const result = document.getElementById('result');
         const transcription = document.getElementById('transcription');
         const logContent = document.getElementById('logContent');
+        const componentContainer = document.getElementById('componentContainer');
 
         function log(message) {
             const timestamp = new Date().toLocaleTimeString();
@@ -113,7 +191,7 @@
             console.log(message);
         }
 
-        function loadMicrofrontend() {
+        function loadComponent() {
             const apiUrl = document.getElementById('apiUrl').value;
             const token = document.getElementById('token').value;
             const timeout = parseInt(document.getElementById('timeout').value) || 60000;
@@ -123,20 +201,125 @@
                 return;
             }
 
-            // Method 1: Set props before loading
-            window.microfrontendProps = {
-                token: token,
-                apiUrl: apiUrl,
-                timeout: timeout
-            };
+            status.textContent = 'Loading component...';
+            log('Loading component with config: ' + JSON.stringify({ apiUrl, token, timeout }));
 
-            // Load the microfrontend
-            iframe.src = 'http://localhost:3000';
-            status.textContent = 'Loading microfrontend...';
-            log('Loading microfrontend with props: ' + JSON.stringify(window.microfrontendProps));
+            // Clear the container
+            componentContainer.innerHTML = '';
 
-            // Alternative Method 2: Use URL parameters
-            // iframe.src = `http://localhost:3000/?token=${encodeURIComponent(token)}&apiUrl=${encodeURIComponent(apiUrl)}&timeout=${timeout}`;
+            // Create a mock React component simulation
+            // In a real React app, this would be rendered by React
+            createMockComponent(apiUrl, token, timeout);
+        }
+
+        function createMockComponent(apiUrl, token, timeout) {
+            // This is a simplified mock of what the React component would look like
+            // In a real React application, you would use the actual KonnektaroAudioRecorder component
+            
+            const mockComponent = document.createElement('div');
+            mockComponent.innerHTML = `
+                <div style="
+                    display: flex; 
+                    flex-direction: column; 
+                    align-items: center; 
+                    justify-content: center; 
+                    height: 100%; 
+                    background: linear-gradient(to bottom, white, #f0f8ff);
+                    padding: 20px;
+                    font-family: Arial, sans-serif;
+                ">
+                    <div style="margin-bottom: 20px;">
+                        <div style="
+                            display: inline-flex;
+                            align-items: center;
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            background-color: #d4edda;
+                            color: #155724;
+                            font-size: 14px;
+                            font-weight: 500;
+                        ">
+                            ✓ Connected
+                        </div>
+                    </div>
+                    
+                    <div style="position: relative; margin-bottom: 20px;">
+                        <button 
+                            onclick="startRecording()"
+                            style="
+                                width: 96px;
+                                height: 96px;
+                                border-radius: 50%;
+                                background-color: #8b5cf6;
+                                border: none;
+                                cursor: pointer;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                                transition: all 0.3s ease;
+                            "
+                            onmouseover="this.style.transform='scale(1.05)'"
+                            onmouseout="this.style.transform='scale(1)'"
+                        >
+                            <svg viewBox="0 0 24 24" fill="white" style="width: 32px; height: 32px;">
+                                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <p style="font-size: 18px; font-weight: 500; color: #374151; margin: 0 0 8px 0;">
+                            Tap to start recording
+                        </p>
+                        <p style="font-size: 14px; color: #6b7280; margin: 0;">
+                            This is a mock component. In a real React app, this would be the actual KonnektaroAudioRecorder.
+                        </p>
+                    </div>
+                    
+                    <div style="margin-top: 20px;">
+                        <button 
+                            onclick="simulateTranscription()"
+                            style="
+                                background-color: #10b981;
+                                color: white;
+                                border: none;
+                                padding: 8px 16px;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 14px;
+                                display: flex;
+                                align-items: center;
+                                gap: 8px;
+                            "
+                        >
+                            <svg viewBox="0 0 24 24" fill="currentColor" style="width: 16px; height: 16px;">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                            </svg>
+                            Simulate Transcription
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            componentContainer.appendChild(mockComponent);
+            status.textContent = 'Component loaded successfully!';
+            log('Mock component created and loaded');
+        }
+
+        function startRecording() {
+            log('Recording started (mock)');
+            status.textContent = 'Recording... (This is a mock - real component would show recording state)';
+        }
+
+        function simulateTranscription() {
+            const mockTranscription = "This is a simulated transcription result from the audio recorder component. In a real implementation, this would be the actual transcribed text from your audio recording.";
+            
+            transcription.textContent = mockTranscription;
+            result.style.display = 'block';
+            status.textContent = 'Transcription completed successfully!';
+            log('Simulated transcription: ' + mockTranscription.substring(0, 50) + '...');
         }
 
         function clearResults() {
@@ -146,40 +329,10 @@
             log('Results cleared');
         }
 
-        // Listen for messages from the microfrontend
-        window.addEventListener('message', (event) => {
-            // In a real application, you should verify the origin for security
-            // if (event.origin !== 'http://localhost:3000') return;
-
-            log('Received message: ' + JSON.stringify(event.data));
-
-            if (event.data.type === 'TRANSCRIPTION_COMPLETE') {
-                const text = event.data.transcription;
-                transcription.textContent = text;
-                result.style.display = 'block';
-                status.textContent = 'Transcription completed successfully!';
-                log('Transcription completed: ' + text.substring(0, 100) + '...');
-            } else if (event.data.type === 'TRANSCRIPTION_ERROR') {
-                const error = event.data.error;
-                status.textContent = 'Transcription failed: ' + error;
-                log('Transcription error: ' + error);
-            }
-        });
-
-        // Handle iframe load events
-        iframe.addEventListener('load', () => {
-            status.textContent = 'Microfrontend loaded successfully';
-            log('Iframe loaded');
-        });
-
-        iframe.addEventListener('error', () => {
-            status.textContent = 'Failed to load microfrontend';
-            log('Iframe load error');
-        });
-
         // Initial setup
         log('Integration example ready');
-        log('Make sure the Next.js development server is running on http://localhost:3000');
+        log('This example shows how to integrate the KonnektaroAudioRecorder component');
+        log('In a real React app, you would import and use the component directly');
     </script>
 </body>
 </html>

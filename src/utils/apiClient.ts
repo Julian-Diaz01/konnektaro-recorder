@@ -69,7 +69,7 @@ export const transcribeAudio = async (
   }
 };
 
-// Simple connection test
+// Simple connection test - just check if endpoint is accessible
 export const testConnection = async (apiUrl: string, token: string): Promise<boolean> => {
   try {
     await axios.get(`${apiUrl}/api/health`, {
@@ -80,12 +80,11 @@ export const testConnection = async (apiUrl: string, token: string): Promise<boo
     });
     return true;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      // Consider 404 as a valid response (endpoint might not exist)
-      if (error.response?.status === 404) {
-        return true;
-      }
+    // If we get any response (even error), endpoint is accessible
+    if (axios.isAxiosError(error) && error.response) {
+      return true;
     }
+    // Only return false if we can't reach the endpoint at all
     return false;
   }
 };

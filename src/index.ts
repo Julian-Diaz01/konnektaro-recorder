@@ -1,6 +1,3 @@
-// Main component exports
-export { SimpleAudioRecorder } from './components/SimpleAudioRecorder';
-
 // Hook exports
 export { useAudioRecorder } from './hooks/useAudioRecorder';
 export type { AudioRecorderState, AudioRecorderControls } from './hooks/useAudioRecorder';
