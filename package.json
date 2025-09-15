@@ -29,12 +29,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/konnektaro/speech-to-text.git"
+    "url": "git+https://github.com/Julian-Diaz01/konnektaro-recorder.git"
   },
   "bugs": {
-    "url": "https://github.com/konnektaro/speech-to-text/issues"
+    "url": "https://github.com/Julian-Diaz01/konnektaro-recorder/issues"
   },
-  "homepage": "https://github.com/konnektaro/speech-to-text#readme",
+  "homepage": "https://github.com/Julian-Diaz01/konnektaro-recorder#readme",
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
