@@ -356,7 +356,7 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
             `}
                         >
                             {/* Microphone Icon - Always White */}
-                            <div className="text-white text-6xl transition-all duration-300">
+                            <div className="text-white text-6xl transition-all duration-300 justify-items-center">
                                 {(isRecording || isListening) ? (
                                     // Recording/Listening state - microphone with waves
                                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-1/2 h-1/2 m-auto">
