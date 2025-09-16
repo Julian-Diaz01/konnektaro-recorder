@@ -8,7 +8,7 @@ A React component library for speech-to-text conversion with dual-mode support. 
 - 📱 **Cross-Platform**: Works on both mobile and web browsers
 - 🔄 **Dual Mode Support**: Custom API or native browser Speech Recognition
 - 🔐 **Optional Authentication**: Secure API communication with optional bearer tokens
-- 🎨 **Minimal UI**: Centered microphone icon with ripple effect during recording
+- 🎨 **Customizable UI**: Centered microphone icon with customizable colors and smooth ripple effects
 - ⚡ **Auto-Conversion**: Automatically converts speech to text when recording stops
 - 🛡️ **Permission Handling**: Graceful microphone permission management
 - 📡 **Axios HTTP Client**: Robust HTTP requests with error handling
@@ -96,7 +96,11 @@ function App() {
 | `timeout` | `number` | No | `60000` | Request timeout in milliseconds (API mode only) |
 | `onTranscriptionComplete` | `(transcription: string) => void` | No | - | Callback when transcription is completed |
 | `onError` | `(error: string) => void` | No | - | Callback when an error occurs |
-| `className` | `string` | No | - | Custom CSS class name for styling |
+| `activeBackgroundColor` | `string` | No | `"#8b5cf6"` | Background color when recording/listening |
+| `disabledBackgroundColor` | `string` | No | `"#6b7280"` | Background color when disabled |
+| `idleBackgroundColor` | `string` | No | `"#8b5cf6"` | Background color when stopped/idle |
+| `iconColor` | `string` | No | `"#ffffff"` | Color of the microphone icon |
+| `rippleColor` | `string` | No | `"#a855f7"` | Color of the ripple effect when recording |
 
 **Mode Selection:**
 - **API Mode**: Provide `apiUrl` prop (token is optional but recommended for security)
@@ -586,21 +590,98 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 ## Styling
 
-The component uses Tailwind CSS classes. You can customize the appearance by:
+The component includes built-in customizable styling options and uses Tailwind CSS classes. You can customize the appearance in several ways:
 
-1. **Using className prop:**
+### 1. **Using Built-in Color Props (Recommended)**
+
 ```tsx
+// Custom color scheme
 <KonnektaroAudioRecorder 
-  className="my-custom-class"
-  // ... other props
+  activeBackgroundColor="#ef4444"    // Red when recording
+  disabledBackgroundColor="#9ca3af"  // Gray when disabled
+  idleBackgroundColor="#3b82f6"      // Blue when idle
+  iconColor="#ffffff"                // White icon
+  rippleColor="#f59e0b"              // Amber ripple effect
+  onTranscriptionComplete={handleTranscription}
+  onError={handleError}
+/>
+
+// Minimal customization
+<KonnektaroAudioRecorder 
+  activeBackgroundColor="#10b981"    // Green when recording
+  rippleColor="#34d399"              // Light green ripple
+  onTranscriptionComplete={handleTranscription}
+  onError={handleError}
 />
 ```
 
-2. **Overriding CSS classes:**
+### 2. **Default Styling**
+
+If no color props are provided, the component uses a beautiful purple theme:
+
+```tsx
+<KonnektaroAudioRecorder 
+  onTranscriptionComplete={handleTranscription}
+  onError={handleError}
+/>
+// Uses default purple colors: #8b5cf6 (background), #a855f7 (ripple), #ffffff (icon)
+```
+
+### 3. **CSS Customization**
+
+You can also override styles using CSS:
+
 ```css
-.konnektaro-audio-recorder {
-  /* Your custom styles */
+/* Custom styles for the microphone button */
+.konnektaro-audio-recorder button {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
 }
+
+/* Custom ripple animation */
+@keyframes custom-ripple {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+```
+
+### 4. **Color Examples**
+
+Here are some popular color combinations:
+
+```tsx
+// Professional Blue Theme
+<KonnektaroAudioRecorder 
+  activeBackgroundColor="#2563eb"
+  idleBackgroundColor="#3b82f6"
+  rippleColor="#60a5fa"
+  iconColor="#ffffff"
+/>
+
+// Success Green Theme
+<KonnektaroAudioRecorder 
+  activeBackgroundColor="#059669"
+  idleBackgroundColor="#10b981"
+  rippleColor="#34d399"
+  iconColor="#ffffff"
+/>
+
+// Warning Orange Theme
+<KonnektaroAudioRecorder 
+  activeBackgroundColor="#ea580c"
+  idleBackgroundColor="#f97316"
+  rippleColor="#fb923c"
+  iconColor="#ffffff"
+/>
+
+// Dark Theme
+<KonnektaroAudioRecorder 
+  activeBackgroundColor="#374151"
+  idleBackgroundColor="#4b5563"
+  disabledBackgroundColor="#6b7280"
+  rippleColor="#9ca3af"
+  iconColor="#ffffff"
+/>
 ```
 
 ## Error Handling
@@ -660,6 +741,14 @@ npm run lint
 MIT License - see LICENSE file for details.
 
 ## Changelog
+
+### 1.1.2
+- ✨ **Enhanced Styling**: Added customizable color props for microphone button and ripple effects
+- 🎨 **New Color Props**: `activeBackgroundColor`, `disabledBackgroundColor`, `idleBackgroundColor`, `iconColor`, `rippleColor`
+- 🌊 **Improved Ripple Effect**: Smaller, more subtle ripples with smooth fade-out animation
+- 🎯 **Better UX**: Enhanced visual feedback with customizable state-based colors
+- 📚 **Updated Documentation**: Comprehensive styling guide with color examples and themes
+- 🔧 **Code Cleanup**: Removed unused props and improved component structure
 
 ### 1.1.0
 - Added native browser Speech Recognition API fallback
