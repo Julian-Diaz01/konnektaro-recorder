@@ -54,6 +54,11 @@ declare var SpeechRecognition: {
     new(): SpeechRecognition;
 };
 
+interface ColorState {
+    background: string;
+    icon: string;
+}
+
 export interface KonnektaroAudioRecorderProps {
     /**
      * API URL for transcription service
@@ -84,34 +89,39 @@ export interface KonnektaroAudioRecorderProps {
     onError?: (error: string) => void;
 
     /**
-     * Background color for the microphone button when active/recording
-     * @default "#8b5cf6" (purple-500)
+     * Color configuration for different states
      */
-    activeBackgroundColor?: string;
-
-    /**
-     * Background color for the microphone button when disabled
-     * @default "#6b7280" (gray-500)
-     */
-    disabledBackgroundColor?: string;
-
-    /**
-     * Background color for the microphone button when stopped/idle
-     * @default "#8b5cf6" (purple-500)
-     */
-    idleBackgroundColor?: string;
-
-    /**
-     * Color for the microphone icon
-     * @default "#ffffff" (white)
-     */
-    iconColor?: string;
-
-    /**
-     * Color for the ripple effect when recording
-     * @default "#a855f7" (purple-400)
-     */
-    rippleColor?: string;
+    colors?: {
+        /**
+         * Colors when the microphone is idle/ready
+         * @default { background: "#8b5cf6", icon: "#ffffff" }
+         */
+        idle?: ColorState;
+        
+        /**
+         * Colors when actively recording or listening
+         * @default { background: "#8b5cf6", icon: "#ffffff" }
+         */
+        active?: ColorState;
+        
+        /**
+         * Colors when disabled (no permission, connection error, etc.)
+         * @default { background: "#6b7280", icon: "#ffffff" }
+         */
+        disabled?: ColorState;
+        
+        /**
+         * Colors when transcribing audio
+         * @default { background: "#8b5cf6", icon: "#ffffff" }
+         */
+        transcribing?: ColorState;
+        
+        /**
+         * Color for the ripple effect when recording
+         * @default "#a855f7"
+         */
+        ripple?: string;
+    };
 }
 
 /**
@@ -136,6 +146,18 @@ export interface KonnektaroAudioRecorderProps {
  *
  * // Using Speech API mode (no props needed)
  * <KonnektaroAudioRecorder />
+ *
+ * // Customizing colors for different states
+ * <KonnektaroAudioRecorder 
+ *   apiUrl="https://api.example.com"
+ *   colors={{
+ *     idle: { background: "#3b82f6", icon: "#ffffff" },
+ *     active: { background: "#ef4444", icon: "#ffffff" },
+ *     disabled: { background: "#9ca3af", icon: "#ffffff" },
+ *     transcribing: { background: "#f59e0b", icon: "#ffffff" },
+ *     ripple: "#ef4444"
+ *   }}
+ * />
  * ```
  */
 export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = ({
@@ -144,11 +166,7 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                                                                                     timeout = 60000,
                                                                                     onTranscriptionComplete,
                                                                                     onError,
-                                                                                    activeBackgroundColor = "#8b5cf6",
-                                                                                    disabledBackgroundColor = "#6b7280",
-                                                                                    idleBackgroundColor = "#8b5cf6",
-                                                                                    iconColor = "#ffffff",
-                                                                                    rippleColor = "#a855f7",
+                                                                                    colors = {},
                                                                                 }) => {
     const [apiUrl, setApiUrl] = useState<string>('');
     const [token, setToken] = useState<string>('');
@@ -166,6 +184,38 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
         startRecording,
         stopRecording,
     } = useAudioRecorder();
+
+    // Default color configuration
+    const defaultColors = {
+        idle: { background: "#8b5cf6", icon: "#ffffff" },
+        active: { background: "#8b5cf6", icon: "#ffffff" },
+        disabled: { background: "#6b7280", icon: "#ffffff" },
+        transcribing: { background: "#8b5cf6", icon: "#ffffff" },
+        ripple: "#a855f7"
+    };
+
+    // Merge user colors with defaults
+    const colorConfig = {
+        idle: { ...defaultColors.idle, ...colors.idle },
+        active: { ...defaultColors.active, ...colors.active },
+        disabled: { ...defaultColors.disabled, ...colors.disabled },
+        transcribing: { ...defaultColors.transcribing, ...colors.transcribing },
+        ripple: colors.ripple || defaultColors.ripple
+    };
+
+    // Get current colors based on component state
+    const getCurrentColors = (): ColorState => {
+        if (isDisabled()) {
+            return colorConfig.disabled;
+        }
+        if (isTranscribing) {
+            return colorConfig.transcribing;
+        }
+        if (isRecording || isListening) {
+            return colorConfig.active;
+        }
+        return colorConfig.idle;
+    };
 
     // Initialize configuration
     useEffect(() => {
@@ -329,7 +379,7 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                     }
                 `}
             </style>
-            <div className="relative min-h-screen bg-gradient-to-b from-white to-blue-50 p-4">
+            <div className="relative bg-gradient-to-b from-white to-blue-50 p-4">
 
             {/* Fixed center microphone with ripple effect */}
             <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
@@ -342,19 +392,19 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                                 <div
                                     className="absolute w-32 h-32 border-2 rounded-full animate-ping opacity-0"
                                     style={{
-                                        borderColor: rippleColor,
+                                        borderColor: colorConfig.ripple,
                                         animation: 'ripple-fade 2s ease-out infinite'
                                     }}></div>
                                 <div
                                     className="absolute w-40 h-40 border-2 rounded-full animate-ping opacity-0"
                                     style={{
-                                        borderColor: rippleColor,
+                                        borderColor: colorConfig.ripple,
                                         animation: 'ripple-fade 2s ease-out infinite 0.3s'
                                     }}></div>
                                 <div
                                     className="absolute w-48 h-48 border-2 rounded-full animate-ping opacity-0"
                                     style={{
-                                        borderColor: rippleColor,
+                                        borderColor: colorConfig.ripple,
                                         animation: 'ripple-fade 2s ease-out infinite 0.6s'
                                     }}></div>
                             </>
@@ -366,17 +416,13 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                             disabled={isDisabled()}
                             className="relative z-10 w-40 h-40 rounded-full transition-all duration-300 transform shadow-md hover:shadow-lg active:scale-95"
                             style={{
-                                backgroundColor: isDisabled() 
-                                    ? disabledBackgroundColor 
-                                    : (isRecording || isListening) 
-                                        ? activeBackgroundColor 
-                                        : idleBackgroundColor,
+                                backgroundColor: getCurrentColors().background,
                                 opacity: isDisabled() ? 0.5 : 1,
                                 cursor: isDisabled() ? 'not-allowed' : 'pointer'
                             }}
                         >
                             {/* Microphone Icon */}
-                            <div className="text-6xl transition-all duration-300 justify-items-center" style={{color: iconColor}}>
+                            <div className="text-6xl transition-all duration-300 justify-items-center" style={{color: getCurrentColors().icon}}>
                                 {(isRecording || isListening) ? (
                                     // Recording/Listening state - microphone with waves
                                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-1/2 h-1/2 m-auto">

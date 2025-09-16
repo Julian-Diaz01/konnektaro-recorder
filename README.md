@@ -8,7 +8,7 @@ A React component library for speech-to-text conversion with dual-mode support. 
 - 📱 **Cross-Platform**: Works on both mobile and web browsers
 - 🔄 **Dual Mode Support**: Custom API or native browser Speech Recognition
 - 🔐 **Optional Authentication**: Secure API communication with optional bearer tokens
-- 🎨 **Customizable UI**: Centered microphone icon with customizable colors and smooth ripple effects
+- 🎨 **State-Based Color System**: Advanced color customization with separate colors for idle, active, disabled, and transcribing states
 - ⚡ **Auto-Conversion**: Automatically converts speech to text when recording stops
 - 🛡️ **Permission Handling**: Graceful microphone permission management
 - 📡 **Axios HTTP Client**: Robust HTTP requests with error handling
@@ -47,6 +47,13 @@ function App() {
       token="your-auth-token" // Optional but recommended for security
       onTranscriptionComplete={handleTranscriptionComplete}
       onError={handleError}
+      colors={{
+        idle: { background: "#3b82f6", icon: "#ffffff" },
+        active: { background: "#ef4444", icon: "#ffffff" },
+        disabled: { background: "#9ca3af", icon: "#ffffff" },
+        transcribing: { background: "#f59e0b", icon: "#ffffff" },
+        ripple: "#ef4444"
+      }}
     />
   );
 }
@@ -65,6 +72,13 @@ function App() {
       // No token provided - API should handle unauthenticated requests
       onTranscriptionComplete={(transcription) => console.log(transcription)}
       onError={(error) => console.error(error)}
+      colors={{
+        idle: { background: "#10b981", icon: "#ffffff" },
+        active: { background: "#059669", icon: "#ffffff" },
+        disabled: { background: "#9ca3af", icon: "#ffffff" },
+        transcribing: { background: "#f59e0b", icon: "#ffffff" },
+        ripple: "#059669"
+      }}
     />
   );
 }
@@ -81,6 +95,13 @@ function App() {
     <KonnektaroAudioRecorder
       onTranscriptionComplete={(transcription) => console.log(transcription)}
       onError={(error) => console.error(error)}
+      colors={{
+        idle: { background: "#8b5cf6", icon: "#ffffff" },
+        active: { background: "#7c3aed", icon: "#ffffff" },
+        disabled: { background: "#9ca3af", icon: "#ffffff" },
+        transcribing: { background: "#f59e0b", icon: "#ffffff" },
+        ripple: "#a855f7"
+      }}
     />
   );
 }
@@ -96,11 +117,35 @@ function App() {
 | `timeout` | `number` | No | `60000` | Request timeout in milliseconds (API mode only) |
 | `onTranscriptionComplete` | `(transcription: string) => void` | No | - | Callback when transcription is completed |
 | `onError` | `(error: string) => void` | No | - | Callback when an error occurs |
-| `activeBackgroundColor` | `string` | No | `"#8b5cf6"` | Background color when recording/listening |
-| `disabledBackgroundColor` | `string` | No | `"#6b7280"` | Background color when disabled |
-| `idleBackgroundColor` | `string` | No | `"#8b5cf6"` | Background color when stopped/idle |
-| `iconColor` | `string` | No | `"#ffffff"` | Color of the microphone icon |
-| `rippleColor` | `string` | No | `"#a855f7"` | Color of the ripple effect when recording |
+| `colors` | `ColorConfig` | No | See below | State-based color configuration |
+
+### ColorConfig Interface
+
+```tsx
+interface ColorState {
+  background: string;  // Background color
+  icon: string;        // Icon color
+}
+
+interface ColorConfig {
+  idle?: ColorState;         // Colors when idle/ready
+  active?: ColorState;       // Colors when recording/listening
+  disabled?: ColorState;     // Colors when disabled
+  transcribing?: ColorState; // Colors when transcribing
+  ripple?: string;          // Ripple effect color
+}
+```
+
+**Default Colors:**
+```tsx
+{
+  idle: { background: "#8b5cf6", icon: "#ffffff" },
+  active: { background: "#8b5cf6", icon: "#ffffff" },
+  disabled: { background: "#6b7280", icon: "#ffffff" },
+  transcribing: { background: "#8b5cf6", icon: "#ffffff" },
+  ripple: "#a855f7"
+}
+```
 
 **Mode Selection:**
 - **API Mode**: Provide `apiUrl` prop (token is optional but recommended for security)
@@ -590,26 +635,30 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 ## Styling
 
-The component includes built-in customizable styling options and uses Tailwind CSS classes. You can customize the appearance in several ways:
+The component includes a powerful state-based color system that allows you to customize colors for different states. You can customize the appearance in several ways:
 
-### 1. **Using Built-in Color Props (Recommended)**
+### 1. **Using State-Based Color System (Recommended)**
 
 ```tsx
-// Custom color scheme
+// Complete color customization
 <KonnektaroAudioRecorder 
-  activeBackgroundColor="#ef4444"    // Red when recording
-  disabledBackgroundColor="#9ca3af"  // Gray when disabled
-  idleBackgroundColor="#3b82f6"      // Blue when idle
-  iconColor="#ffffff"                // White icon
-  rippleColor="#f59e0b"              // Amber ripple effect
+  colors={{
+    idle: { background: "#3b82f6", icon: "#ffffff" },        // Blue when ready
+    active: { background: "#ef4444", icon: "#ffffff" },      // Red when recording
+    disabled: { background: "#9ca3af", icon: "#ffffff" },    // Gray when disabled
+    transcribing: { background: "#f59e0b", icon: "#ffffff" }, // Amber when processing
+    ripple: "#ef4444"                                        // Red ripple effect
+  }}
   onTranscriptionComplete={handleTranscription}
   onError={handleError}
 />
 
-// Minimal customization
+// Minimal customization (only override specific states)
 <KonnektaroAudioRecorder 
-  activeBackgroundColor="#10b981"    // Green when recording
-  rippleColor="#34d399"              // Light green ripple
+  colors={{
+    active: { background: "#10b981", icon: "#ffffff" },      // Green when recording
+    ripple: "#34d399"                                        // Light green ripple
+  }}
   onTranscriptionComplete={handleTranscription}
   onError={handleError}
 />
@@ -617,14 +666,14 @@ The component includes built-in customizable styling options and uses Tailwind C
 
 ### 2. **Default Styling**
 
-If no color props are provided, the component uses a beautiful purple theme:
+If no colors are provided, the component uses a beautiful purple theme:
 
 ```tsx
 <KonnektaroAudioRecorder 
   onTranscriptionComplete={handleTranscription}
   onError={handleError}
 />
-// Uses default purple colors: #8b5cf6 (background), #a855f7 (ripple), #ffffff (icon)
+// Uses default purple colors for all states
 ```
 
 ### 3. **CSS Customization**
@@ -645,42 +694,61 @@ You can also override styles using CSS:
 }
 ```
 
-### 4. **Color Examples**
+### 4. **Color Theme Examples**
 
-Here are some popular color combinations:
+Here are some popular color combinations using the new state-based system:
 
 ```tsx
 // Professional Blue Theme
 <KonnektaroAudioRecorder 
-  activeBackgroundColor="#2563eb"
-  idleBackgroundColor="#3b82f6"
-  rippleColor="#60a5fa"
-  iconColor="#ffffff"
+  colors={{
+    idle: { background: "#3b82f6", icon: "#ffffff" },
+    active: { background: "#2563eb", icon: "#ffffff" },
+    disabled: { background: "#9ca3af", icon: "#ffffff" },
+    transcribing: { background: "#1d4ed8", icon: "#ffffff" },
+    ripple: "#60a5fa"
+  }}
 />
 
 // Success Green Theme
 <KonnektaroAudioRecorder 
-  activeBackgroundColor="#059669"
-  idleBackgroundColor="#10b981"
-  rippleColor="#34d399"
-  iconColor="#ffffff"
+  colors={{
+    idle: { background: "#10b981", icon: "#ffffff" },
+    active: { background: "#059669", icon: "#ffffff" },
+    disabled: { background: "#9ca3af", icon: "#ffffff" },
+    transcribing: { background: "#047857", icon: "#ffffff" },
+    ripple: "#34d399"
+  }}
 />
 
 // Warning Orange Theme
 <KonnektaroAudioRecorder 
-  activeBackgroundColor="#ea580c"
-  idleBackgroundColor="#f97316"
-  rippleColor="#fb923c"
-  iconColor="#ffffff"
+  colors={{
+    idle: { background: "#f97316", icon: "#ffffff" },
+    active: { background: "#ea580c", icon: "#ffffff" },
+    disabled: { background: "#9ca3af", icon: "#ffffff" },
+    transcribing: { background: "#dc2626", icon: "#ffffff" },
+    ripple: "#fb923c"
+  }}
 />
 
 // Dark Theme
 <KonnektaroAudioRecorder 
-  activeBackgroundColor="#374151"
-  idleBackgroundColor="#4b5563"
-  disabledBackgroundColor="#6b7280"
-  rippleColor="#9ca3af"
-  iconColor="#ffffff"
+  colors={{
+    idle: { background: "#4b5563", icon: "#ffffff" },
+    active: { background: "#374151", icon: "#ffffff" },
+    disabled: { background: "#6b7280", icon: "#ffffff" },
+    transcribing: { background: "#1f2937", icon: "#ffffff" },
+    ripple: "#9ca3af"
+  }}
+/>
+
+// Minimalist Theme (only active state different)
+<KonnektaroAudioRecorder 
+  colors={{
+    active: { background: "#ef4444", icon: "#ffffff" },
+    ripple: "#fca5a5"
+  }}
 />
 ```
 
@@ -741,6 +809,13 @@ npm run lint
 MIT License - see LICENSE file for details.
 
 ## Changelog
+
+### 1.1.5
+- 🎨 **State-Based Color System**: Complete redesign of color customization with separate colors for idle, active, disabled, and transcribing states
+- 🔧 **Enhanced Color Control**: Independent background and icon colors for each state
+- 📚 **Updated Documentation**: Comprehensive examples and theme showcases for the new color system
+- 🎯 **Better UX**: More intuitive color configuration with state-based approach
+- ✨ **Backward Compatibility**: Maintains default purple theme when no colors are specified
 
 ### 1.1.2
 - ✨ **Enhanced Styling**: Added customizable color props for microphone button and ripple effects

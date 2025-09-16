@@ -73,12 +73,26 @@ export const SpeechAPIExample: React.FC = () => {
                             // No props provided - will show configuration error
                             onTranscriptionComplete={handleTranscriptionComplete}
                             onError={handleError}
+                            colors={{
+                                idle: { background: "#3b82f6", icon: "#ffffff" },
+                                active: { background: "#ef4444", icon: "#ffffff" },
+                                disabled: { background: "#9ca3af", icon: "#ffffff" },
+                                transcribing: { background: "#f59e0b", icon: "#ffffff" },
+                                ripple: "#ef4444"
+                            }}
                         />
                     ) : (
                         <KonnektaroAudioRecorder
                             // Speech API mode - no props needed
                             onTranscriptionComplete={handleTranscriptionComplete}
                             onError={handleError}
+                            colors={{
+                                idle: { background: "#10b981", icon: "#ffffff" },
+                                active: { background: "#059669", icon: "#ffffff" },
+                                disabled: { background: "#9ca3af", icon: "#ffffff" },
+                                transcribing: { background: "#f59e0b", icon: "#ffffff" },
+                                ripple: "#059669"
+                            }}
                         />
                     )}
                 </div>
