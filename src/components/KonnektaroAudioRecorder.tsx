@@ -453,7 +453,6 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                             className="relative z-10 w-40 h-40 rounded-full transition-all duration-300 transform shadow-md hover:shadow-lg active:scale-95"
                             style={{
                                 ...applyColorStyles(getCurrentColors()),
-                                opacity: isDisabled() ? 0.5 : 1,
                                 cursor: isDisabled() ? 'not-allowed' : 'pointer'
                             }}
                         >
