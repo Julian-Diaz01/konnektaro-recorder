@@ -1,12 +1,14 @@
 {
   "name": "@konnektaro/speech-to-text",
-  "version": "1.0.5",
-  "description": "A React component for speech-to-text conversion with required environment variables",
+  "version": "1.1.0",
+  "description": "A React component library for speech-to-text conversion with dual-mode support (API mode + native browser Speech Recognition)",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "rollup -c",
@@ -23,7 +25,11 @@
     "transcription",
     "microphone",
     "webrtc",
-    "typescript"
+    "typescript",
+    "speech-recognition",
+    "audio-recording",
+    "voice-to-text",
+    "browser-speech-api"
   ],
   "author": "Konnektaro",
   "license": "MIT",

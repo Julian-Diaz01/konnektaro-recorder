@@ -2,16 +2,68 @@ import React, {useState, useEffect, useCallback} from 'react';
 import {useAudioRecorder} from '../hooks/useAudioRecorder';
 import {transcribeAudio, testConnection} from '../utils/apiClient';
 
+// TypeScript declarations for Speech Recognition API
+declare global {
+    interface Window {
+        SpeechRecognition: typeof SpeechRecognition;
+        webkitSpeechRecognition: typeof SpeechRecognition;
+    }
+}
+
+interface SpeechRecognition extends EventTarget {
+    continuous: boolean;
+    interimResults: boolean;
+    lang: string;
+    start(): void;
+    stop(): void;
+    onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+    onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+    onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+    onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+}
+
+interface SpeechRecognitionEvent extends Event {
+    results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+    readonly length: number;
+    item(index: number): SpeechRecognitionResult;
+    [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+    readonly length: number;
+    item(index: number): SpeechRecognitionAlternative;
+    [index: number]: SpeechRecognitionAlternative;
+    isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+    transcript: string;
+    confidence: number;
+}
+
+interface SpeechRecognitionErrorEvent extends Event {
+    error: string;
+    message: string;
+}
+
+declare var SpeechRecognition: {
+    prototype: SpeechRecognition;
+    new(): SpeechRecognition;
+};
+
 export interface KonnektaroAudioRecorderProps {
     /**
-     * API URL for transcription service - REQUIRED
-     * Must be provided via props or environment variable
+     * API URL for transcription service
+     * If not provided, will use native browser Speech API as fallback
      */
     apiUrl?: string;
 
     /**
-     * Authentication token for API requests - REQUIRED
-     * Must be provided via props or environment variable
+     * Authentication token for API requests (optional but recommended for security)
+     * If not provided, API requests will be made without authentication
      */
     token?: string;
 
@@ -40,21 +92,24 @@ export interface KonnektaroAudioRecorderProps {
 /**
  * KonnektaroAudioRecorder - A React component for audio recording and transcription
  *
- * This component requires either:
- * 1. apiUrl and token props to be provided directly
- * 2. Environment variables NEXT_PUBLIC_KONNEKTARO_API_URL and NEXT_PUBLIC_KONNEKTARO_TOKEN
+ * This component supports two modes:
+ * 1. API Mode: Provide apiUrl prop (token is optional but recommended)
+ * 2. Speech API Mode: Uses native browser Speech Recognition API as fallback
  *
  * @example
  * ```tsx
- * // Using props
+ * // Using API mode with authentication
  * <KonnektaroAudioRecorder 
  *   apiUrl="https://api.example.com" 
  *   token="your-token" 
  * />
  *
- * // Using environment variables
- * // NEXT_PUBLIC_KONNEKTARO_API_URL=https://api.example.com
- * // NEXT_PUBLIC_KONNEKTARO_TOKEN=your-token
+ * // Using API mode without authentication
+ * <KonnektaroAudioRecorder 
+ *   apiUrl="https://api.example.com" 
+ * />
+ *
+ * // Using Speech API mode (no props needed)
  * <KonnektaroAudioRecorder />
  * ```
  */
@@ -72,6 +127,9 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
     const [error, setError] = useState<string>('');
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
+    const [useSpeechAPI, setUseSpeechAPI] = useState(false);
+    const [speechRecognition, setSpeechRecognition] = useState<SpeechRecognition | null>(null);
+    const [isListening, setIsListening] = useState(false);
 
     const {
         isRecording,
@@ -86,29 +144,74 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
     // Initialize configuration
     useEffect(() => {
         const initializeConfig = () => {
-            // Priority 1: Props
-            if (propApiUrl && propToken) {
+            // Priority 1: API Mode (with or without token)
+            if (propApiUrl) {
                 setApiUrl(propApiUrl);
-                setToken(propToken);
+                setToken(propToken || ''); // Token is optional
+                setIsConfigured(true);
+                setUseSpeechAPI(false);
+                setError('');
+                return;
+            }
+
+            // Check for Speech API support
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                setUseSpeechAPI(true);
                 setIsConfigured(true);
                 setError('');
                 return;
             }
 
-            // Configuration error
+            // No configuration and no Speech API support
             setIsConfigured(false);
-            setError('Missing required configuration. Please provide apiUrl and token via props or environment variables.');
+            setUseSpeechAPI(false);
+            setError('No API configuration provided and Speech Recognition API is not supported in this browser.');
         };
 
         initializeConfig();
     }, [propApiUrl, propToken]);
 
-    // Test connection when configured
+    // Initialize Speech Recognition API
+    useEffect(() => {
+        if (useSpeechAPI) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = () => {
+                    setIsListening(true);
+                };
+
+                recognition.onresult = (event: SpeechRecognitionEvent) => {
+                    const transcript = event.results[0][0].transcript;
+                    onTranscriptionComplete?.(transcript);
+                };
+
+                recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+                    onError?.(`Speech recognition error: ${event.error}`);
+                    setIsListening(false);
+                };
+
+                recognition.onend = () => {
+                    setIsListening(false);
+                };
+
+                setSpeechRecognition(recognition);
+                setConnectionStatus('connected');
+            }
+        }
+    }, [useSpeechAPI, onTranscriptionComplete, onError]);
+
+    // Test connection when configured with API
     useEffect(() => {
         const testConn = async () => {
-            if (isConfigured && apiUrl && token) {
+            if (isConfigured && !useSpeechAPI && apiUrl) {
                 try {
-                    const isConnected = await testConnection(apiUrl, token);
+                    const isConnected = await testConnection(apiUrl, token || '');
                     setConnectionStatus(isConnected ? 'connected' : 'error');
                 } catch (error) {
                     setConnectionStatus('error');
@@ -117,21 +220,21 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
         };
 
         testConn();
-    }, [isConfigured, apiUrl, token]);
+    }, [isConfigured, useSpeechAPI, apiUrl, token]);
 
-    // Auto-transcribe when recording stops
+    // Auto-transcribe when recording stops (API mode only)
     useEffect(() => {
-        if (audioBlob && connectionStatus === 'connected') {
+        if (audioBlob && connectionStatus === 'connected' && !useSpeechAPI) {
             handleTranscribe();
         }
-    }, [audioBlob, connectionStatus]);
+    }, [audioBlob, connectionStatus, useSpeechAPI]);
 
     const handleTranscribe = useCallback(async () => {
-        if (!audioBlob || !apiUrl || !token) return;
+        if (!audioBlob || !apiUrl) return;
 
         setIsTranscribing(true);
         try {
-            const result = await transcribeAudio(audioBlob, apiUrl, token, timeout);
+            const result = await transcribeAudio(audioBlob, apiUrl, token || '', timeout);
 
             if (result.success) {
                 onTranscriptionComplete?.(result.transcription);
@@ -148,23 +251,40 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
     }, [audioBlob, apiUrl, token, timeout, onTranscriptionComplete, onError]);
 
     const handleMicrophoneClick = useCallback(async () => {
-        if (hasPermission === false) {
-            onError?.('Microphone access denied');
-            return;
-        }
-
-        if (isRecording) {
-            stopRecording();
+        if (useSpeechAPI) {
+            // Speech API mode
+            if (speechRecognition) {
+                if (isListening) {
+                    speechRecognition.stop();
+                } else {
+                    speechRecognition.start();
+                }
+            }
         } else {
-            await startRecording();
-        }
-    }, [hasPermission, isRecording, startRecording, stopRecording, onError]);
+            // API mode
+            if (hasPermission === false) {
+                onError?.('Microphone access denied');
+                return;
+            }
 
-    const isDisabled = () =>
-        hasPermission === false ||
-        connectionStatus === 'error' ||
-        isTranscribing ||
-        connectionStatus === 'checking';
+            if (isRecording) {
+                stopRecording();
+            } else {
+                await startRecording();
+            }
+        }
+    }, [useSpeechAPI, speechRecognition, isListening, hasPermission, isRecording, startRecording, stopRecording, onError]);
+
+    const isDisabled = () => {
+        if (useSpeechAPI) {
+            return connectionStatus === 'error' || connectionStatus === 'checking';
+        } else {
+            return hasPermission === false ||
+                connectionStatus === 'error' ||
+                isTranscribing ||
+                connectionStatus === 'checking';
+        }
+    };
 
     if (!isConfigured) {
         return (
@@ -179,13 +299,9 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                             <p className="text-red-800 font-medium mb-2">Configuration Required</p>
                             <p className="text-red-600 text-sm mb-3">{error}</p>
                             <div className="text-sm text-red-600">
-                                <p className="mb-2">Provide configuration via:</p>
+                                <p className="mb-2">Provide configuration via props:</p>
                                 <ul className="list-disc list-inside space-y-1 text-left">
-                                    <li>Props: <code className="bg-red-100 px-1 rounded">apiUrl</code> and <code
-                                        className="bg-red-100 px-1 rounded">token</code></li>
-                                    <li>Environment variables: <code
-                                        className="bg-red-100 px-1 rounded">NEXT_PUBLIC_KONNEKTARO_API_URL</code> and <code
-                                        className="bg-red-100 px-1 rounded">NEXT_PUBLIC_KONNEKTARO_TOKEN</code></li>
+                                    <li><code className="bg-red-100 px-1 rounded">apiUrl</code> (token is optional)</li>
                                 </ul>
                             </div>
                         </div>
@@ -194,7 +310,7 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                             <pre className="bg-gray-100 p-2 rounded text-left text-xs overflow-x-auto">
 {`<KonnektaroAudioRecorder 
   apiUrl="https://api.example.com" 
-  token="your-token" 
+  token="your-token"  // Optional
 />`}
               </pre>
                         </div>
@@ -212,8 +328,8 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                 <div className="relative">
                     {/* Ripple Effect Container */}
                     <div className="relative flex items-center justify-center">
-                        {/* Ripple circles for recording animation */}
-                        {isRecording && (
+                        {/* Ripple circles for recording/listening animation */}
+                        {(isRecording || isListening) && (
                             <>
                                 <div
                                     className="absolute w-48 h-48 border-4 border-purple-400 rounded-full animate-ping opacity-60"></div>
@@ -241,8 +357,8 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                         >
                             {/* Microphone Icon - Always White */}
                             <div className="text-white text-6xl transition-all duration-300">
-                                {isRecording ? (
-                                    // Recording state - microphone with waves
+                                {(isRecording || isListening) ? (
+                                    // Recording/Listening state - microphone with waves
                                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-1/2 h-1/2 m-auto">
                                         <path
                                             d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
@@ -257,8 +373,8 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                                         <path d="M12 2a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2"
                                               fill="none" strokeLinecap="round"/>
                                     </svg>
-                                ) : hasPermission === false ? (
-                                    // No permission state - microphone with X
+                                ) : (!useSpeechAPI && hasPermission === false) ? (
+                                    // No permission state - microphone with X (API mode only)
                                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-1/2 h-1/2 m-auto">
                                         <path
                                             d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
