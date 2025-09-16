@@ -6,5 +6,6 @@ export type { AudioRecorderState, AudioRecorderControls } from './hooks/useAudio
 export { transcribeAudio, testConnection } from './utils/apiClient';
 export type { TranscriptionResponse } from './utils/apiClient';
 
-// Main component with required environment variables
+// Main component exports
 export { KonnektaroAudioRecorder } from './components/KonnektaroAudioRecorder';
+export type { KonnektaroAudioRecorderProps } from './components/KonnektaroAudioRecorder';
