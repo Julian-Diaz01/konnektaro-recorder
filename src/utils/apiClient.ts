@@ -10,7 +10,7 @@ export interface TranscriptionResponse {
 export const transcribeAudio = async (
   audioBlob: Blob, 
   apiUrl: string, 
-  token: string, 
+  token: string = '', 
   timeout: number = 30000
 ): Promise<TranscriptionResponse> => {
   try {
@@ -19,11 +19,18 @@ export const transcribeAudio = async (
 
     console.log('Sending transcription request to:', apiUrl);
     
+    // Build headers object
+    const headers: Record<string, string> = {
+      'Content-Type': 'multipart/form-data',
+    };
+    
+    // Only add Authorization header if token is provided
+    if (token && token.trim()) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await axios.post(`${apiUrl}/api/transcribe`, formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      },
+      headers,
       timeout,
     });
 
@@ -70,12 +77,18 @@ export const transcribeAudio = async (
 };
 
 // Simple connection test - just check if endpoint is accessible
-export const testConnection = async (apiUrl: string, token: string): Promise<boolean> => {
+export const testConnection = async (apiUrl: string, token: string = ''): Promise<boolean> => {
   try {
+    // Build headers object
+    const headers: Record<string, string> = {};
+    
+    // Only add Authorization header if token is provided
+    if (token && token.trim()) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     await axios.get(`${apiUrl}/api/health`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      headers,
       timeout: 5000,
     });
     return true;
