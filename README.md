@@ -123,8 +123,11 @@ function App() {
 
 ```tsx
 interface ColorState {
-  background: string;  // Background color
-  icon: string;        // Icon color
+  background?: string;  // Background color
+  icon?: string;        // Icon color
+  border?: string;      // Border color
+  boxShadow?: string;   // Box shadow
+  [key: string]: string | undefined; // Any CSS property
 }
 
 interface ColorConfig {
@@ -133,6 +136,7 @@ interface ColorConfig {
   disabled?: ColorState;     // Colors when disabled
   transcribing?: ColorState; // Colors when transcribing
   ripple?: string;          // Ripple effect color
+  global?: ColorState;      // Global overrides for all states
 }
 ```
 
@@ -146,6 +150,8 @@ interface ColorConfig {
   ripple: "#a855f7"
 }
 ```
+
+**Smart Defaults:** You only need to specify the properties you want to change. All other properties will use sensible defaults.
 
 **Mode Selection:**
 - **API Mode**: Provide `apiUrl` prop (token is optional but recommended for security)
@@ -637,14 +643,14 @@ Access-Control-Allow-Headers: Content-Type, Authorization
 
 The component includes a powerful state-based color system that allows you to customize colors for different states. You can customize the appearance in several ways:
 
-### 1. **Using State-Based Color System (Recommended)**
+### 1. **Using Flexible Color System (Recommended)**
 
 ```tsx
-// Complete color customization
+// Complete color customization with CSS properties
 <KonnektaroAudioRecorder 
   colors={{
     idle: { background: "#3b82f6", icon: "#ffffff" },        // Blue when ready
-    active: { background: "#ef4444", icon: "#ffffff" },      // Red when recording
+    active: { background: "#ef4444", icon: "#ffffff", border: "2px solid #dc2626" }, // Red with border
     disabled: { background: "#9ca3af", icon: "#ffffff" },    // Gray when disabled
     transcribing: { background: "#f59e0b", icon: "#ffffff" }, // Amber when processing
     ripple: "#ef4444"                                        // Red ripple effect
@@ -653,11 +659,35 @@ The component includes a powerful state-based color system that allows you to cu
   onError={handleError}
 />
 
-// Minimal customization (only override specific states)
+// Minimal customization (only override what you need)
 <KonnektaroAudioRecorder 
   colors={{
-    active: { background: "#10b981", icon: "#ffffff" },      // Green when recording
-    ripple: "#34d399"                                        // Light green ripple
+    active: { background: "#10b981" },                       // Just change active background
+    ripple: "#34d399"                                        // And ripple color
+  }}
+  onTranscriptionComplete={handleTranscription}
+  onError={handleError}
+/>
+
+// Global overrides (apply to all states)
+<KonnektaroAudioRecorder 
+  colors={{
+    global: { icon: "#000000" },                             // Black icon for all states
+    active: { background: "#ef4444", boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)" }
+  }}
+  onTranscriptionComplete={handleTranscription}
+  onError={handleError}
+/>
+
+// Advanced CSS properties
+<KonnektaroAudioRecorder 
+  colors={{
+    active: { 
+      background: "linear-gradient(45deg, #ff6b6b, #ee5a24)",
+      border: "3px solid #ff4757",
+      boxShadow: "0 8px 32px rgba(255, 71, 87, 0.3)",
+      transform: "scale(1.05)"
+    }
   }}
   onTranscriptionComplete={handleTranscription}
   onError={handleError}
@@ -696,47 +726,47 @@ You can also override styles using CSS:
 
 ### 4. **Color Theme Examples**
 
-Here are some popular color combinations using the new state-based system:
+Here are some popular color combinations using the flexible system:
 
 ```tsx
 // Professional Blue Theme
 <KonnektaroAudioRecorder 
   colors={{
     idle: { background: "#3b82f6", icon: "#ffffff" },
-    active: { background: "#2563eb", icon: "#ffffff" },
+    active: { background: "#2563eb", icon: "#ffffff", boxShadow: "0 0 20px rgba(37, 99, 235, 0.3)" },
     disabled: { background: "#9ca3af", icon: "#ffffff" },
     transcribing: { background: "#1d4ed8", icon: "#ffffff" },
     ripple: "#60a5fa"
   }}
 />
 
-// Success Green Theme
+// Success Green Theme with Border
 <KonnektaroAudioRecorder 
   colors={{
     idle: { background: "#10b981", icon: "#ffffff" },
-    active: { background: "#059669", icon: "#ffffff" },
+    active: { background: "#059669", icon: "#ffffff", border: "2px solid #047857" },
     disabled: { background: "#9ca3af", icon: "#ffffff" },
     transcribing: { background: "#047857", icon: "#ffffff" },
     ripple: "#34d399"
   }}
 />
 
-// Warning Orange Theme
+// Gradient Theme
 <KonnektaroAudioRecorder 
   colors={{
-    idle: { background: "#f97316", icon: "#ffffff" },
-    active: { background: "#ea580c", icon: "#ffffff" },
+    idle: { background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", icon: "#ffffff" },
+    active: { background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", icon: "#ffffff" },
     disabled: { background: "#9ca3af", icon: "#ffffff" },
-    transcribing: { background: "#dc2626", icon: "#ffffff" },
-    ripple: "#fb923c"
+    transcribing: { background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", icon: "#ffffff" },
+    ripple: "#f5576c"
   }}
 />
 
-// Dark Theme
+// Dark Theme with Glow Effect
 <KonnektaroAudioRecorder 
   colors={{
     idle: { background: "#4b5563", icon: "#ffffff" },
-    active: { background: "#374151", icon: "#ffffff" },
+    active: { background: "#374151", icon: "#ffffff", boxShadow: "0 0 30px rgba(55, 65, 81, 0.5)" },
     disabled: { background: "#6b7280", icon: "#ffffff" },
     transcribing: { background: "#1f2937", icon: "#ffffff" },
     ripple: "#9ca3af"
@@ -748,6 +778,29 @@ Here are some popular color combinations using the new state-based system:
   colors={{
     active: { background: "#ef4444", icon: "#ffffff" },
     ripple: "#fca5a5"
+  }}
+/>
+
+// Global Icon Override
+<KonnektaroAudioRecorder 
+  colors={{
+    global: { icon: "#000000" }, // Black icon for all states
+    active: { background: "#ef4444" },
+    ripple: "#fca5a5"
+  }}
+/>
+
+// Advanced Custom Styling
+<KonnektaroAudioRecorder 
+  colors={{
+    active: { 
+      background: "radial-gradient(circle, #ff6b6b, #ee5a24)",
+      border: "3px solid #ff4757",
+      boxShadow: "0 8px 32px rgba(255, 71, 87, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+      transform: "scale(1.05)",
+      borderRadius: "50%"
+    },
+    ripple: "#ff4757"
   }}
 />
 ```
@@ -811,10 +864,11 @@ MIT License - see LICENSE file for details.
 ## Changelog
 
 ### 1.1.5
-- 🎨 **State-Based Color System**: Complete redesign of color customization with separate colors for idle, active, disabled, and transcribing states
-- 🔧 **Enhanced Color Control**: Independent background and icon colors for each state
-- 📚 **Updated Documentation**: Comprehensive examples and theme showcases for the new color system
-- 🎯 **Better UX**: More intuitive color configuration with state-based approach
+- 🎨 **Flexible Color System**: Complete redesign with support for any CSS property (background, border, boxShadow, transform, etc.)
+- 🔧 **Smart Defaults**: Only specify the properties you want to change - everything else uses sensible defaults
+- 🌍 **Global Overrides**: Set common properties (like icon color) for all states with the `global` option
+- 🎯 **Enhanced Flexibility**: Support for gradients, borders, shadows, transforms, and any CSS property
+- 📚 **Updated Documentation**: Comprehensive examples showing advanced styling capabilities
 - ✨ **Backward Compatibility**: Maintains default purple theme when no colors are specified
 
 ### 1.1.2

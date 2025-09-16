@@ -55,8 +55,11 @@ declare var SpeechRecognition: {
 };
 
 interface ColorState {
-    background: string;
-    icon: string;
+    background?: string;
+    icon?: string;
+    border?: string;
+    boxShadow?: string;
+    [key: string]: string | undefined; // Allow any CSS property
 }
 
 export interface KonnektaroAudioRecorderProps {
@@ -90,6 +93,7 @@ export interface KonnektaroAudioRecorderProps {
 
     /**
      * Color configuration for different states
+     * You can specify just the properties you want to override
      */
     colors?: {
         /**
@@ -121,6 +125,12 @@ export interface KonnektaroAudioRecorderProps {
          * @default "#a855f7"
          */
         ripple?: string;
+        
+        /**
+         * Global color overrides that apply to all states
+         * Useful for setting common properties like icon color
+         */
+        global?: ColorState;
     };
 }
 
@@ -194,12 +204,21 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
         ripple: "#a855f7"
     };
 
-    // Merge user colors with defaults
+    // Helper function to merge color states with smart defaults
+    const mergeColorState = (defaultState: ColorState, userState?: ColorState, globalState?: ColorState): ColorState => {
+        return {
+            ...defaultState,
+            ...globalState, // Global overrides apply first
+            ...userState    // User state overrides apply last
+        };
+    };
+
+    // Merge user colors with defaults and global overrides
     const colorConfig = {
-        idle: { ...defaultColors.idle, ...colors.idle },
-        active: { ...defaultColors.active, ...colors.active },
-        disabled: { ...defaultColors.disabled, ...colors.disabled },
-        transcribing: { ...defaultColors.transcribing, ...colors.transcribing },
+        idle: mergeColorState(defaultColors.idle, colors.idle, colors.global),
+        active: mergeColorState(defaultColors.active, colors.active, colors.global),
+        disabled: mergeColorState(defaultColors.disabled, colors.disabled, colors.global),
+        transcribing: mergeColorState(defaultColors.transcribing, colors.transcribing, colors.global),
         ripple: colors.ripple || defaultColors.ripple
     };
 
@@ -215,6 +234,23 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
             return colorConfig.active;
         }
         return colorConfig.idle;
+    };
+
+    // Helper function to apply color styles to an element
+    const applyColorStyles = (colorState: ColorState): React.CSSProperties => {
+        const styles: React.CSSProperties = {};
+        
+        // Apply all CSS properties from the color state
+        Object.entries(colorState).forEach(([key, value]) => {
+            if (value !== undefined) {
+                // Convert camelCase to kebab-case for CSS properties
+                const cssKey = key.replace(/([A-Z])/g, '-$1').toLowerCase();
+                // Use type assertion for dynamic CSS properties
+                (styles as any)[cssKey] = value;
+            }
+        });
+        
+        return styles;
     };
 
     // Initialize configuration
@@ -416,7 +452,7 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                             disabled={isDisabled()}
                             className="relative z-10 w-40 h-40 rounded-full transition-all duration-300 transform shadow-md hover:shadow-lg active:scale-95"
                             style={{
-                                backgroundColor: getCurrentColors().background,
+                                ...applyColorStyles(getCurrentColors()),
                                 opacity: isDisabled() ? 0.5 : 1,
                                 cursor: isDisabled() ? 'not-allowed' : 'pointer'
                             }}

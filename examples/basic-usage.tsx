@@ -22,10 +22,7 @@ function App() {
         onTranscriptionComplete={handleTranscriptionComplete}
         onError={handleError}
         colors={{
-          idle: { background: "#3b82f6", icon: "#ffffff" },
-          active: { background: "#ef4444", icon: "#ffffff" },
-          disabled: { background: "#9ca3af", icon: "#ffffff" },
-          transcribing: { background: "#f59e0b", icon: "#ffffff" },
+          active: { background: "#ef4444", boxShadow: "0 0 20px rgba(239, 68, 68, 0.5)" },
           ripple: "#ef4444"
         }}
       />

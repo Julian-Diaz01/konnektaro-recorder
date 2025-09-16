@@ -74,10 +74,7 @@ export const SpeechAPIExample: React.FC = () => {
                             onTranscriptionComplete={handleTranscriptionComplete}
                             onError={handleError}
                             colors={{
-                                idle: { background: "#3b82f6", icon: "#ffffff" },
-                                active: { background: "#ef4444", icon: "#ffffff" },
-                                disabled: { background: "#9ca3af", icon: "#ffffff" },
-                                transcribing: { background: "#f59e0b", icon: "#ffffff" },
+                                active: { background: "#ef4444", border: "2px solid #dc2626" },
                                 ripple: "#ef4444"
                             }}
                         />
@@ -87,10 +84,8 @@ export const SpeechAPIExample: React.FC = () => {
                             onTranscriptionComplete={handleTranscriptionComplete}
                             onError={handleError}
                             colors={{
-                                idle: { background: "#10b981", icon: "#ffffff" },
-                                active: { background: "#059669", icon: "#ffffff" },
-                                disabled: { background: "#9ca3af", icon: "#ffffff" },
-                                transcribing: { background: "#f59e0b", icon: "#ffffff" },
+                                global: { icon: "#ffffff" },
+                                active: { background: "#059669", boxShadow: "0 0 20px rgba(5, 150, 105, 0.4)" },
                                 ripple: "#059669"
                             }}
                         />
