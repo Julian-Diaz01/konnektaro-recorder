@@ -15,7 +15,7 @@ export const transcribeAudio = async (
 ): Promise<TranscriptionResponse> => {
   try {
     const formData = new FormData();
-    formData.append('audio', audioBlob, `audio-${Date.now()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}.webm`);
+    formData.append('audio', audioBlob, `audio-${Date.now()}-${Math.floor(Math.random() * 1000).toString().padStart(2, '0')}.webm`);
 
     console.log('Sending transcription request to:', apiUrl);
     
