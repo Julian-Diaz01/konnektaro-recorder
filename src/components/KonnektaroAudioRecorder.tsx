@@ -84,9 +84,34 @@ export interface KonnektaroAudioRecorderProps {
     onError?: (error: string) => void;
 
     /**
-     * Custom CSS class name for styling
+     * Background color for the microphone button when active/recording
+     * @default "#8b5cf6" (purple-500)
      */
-    className?: string;
+    activeBackgroundColor?: string;
+
+    /**
+     * Background color for the microphone button when disabled
+     * @default "#6b7280" (gray-500)
+     */
+    disabledBackgroundColor?: string;
+
+    /**
+     * Background color for the microphone button when stopped/idle
+     * @default "#8b5cf6" (purple-500)
+     */
+    idleBackgroundColor?: string;
+
+    /**
+     * Color for the microphone icon
+     * @default "#ffffff" (white)
+     */
+    iconColor?: string;
+
+    /**
+     * Color for the ripple effect when recording
+     * @default "#a855f7" (purple-400)
+     */
+    rippleColor?: string;
 }
 
 /**
@@ -119,11 +144,14 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                                                                                     timeout = 60000,
                                                                                     onTranscriptionComplete,
                                                                                     onError,
-                                                                                    className,
+                                                                                    activeBackgroundColor = "#8b5cf6",
+                                                                                    disabledBackgroundColor = "#6b7280",
+                                                                                    idleBackgroundColor = "#8b5cf6",
+                                                                                    iconColor = "#ffffff",
+                                                                                    rippleColor = "#a855f7",
                                                                                 }) => {
     const [apiUrl, setApiUrl] = useState<string>('');
     const [token, setToken] = useState<string>('');
-    const [isConfigured, setIsConfigured] = useState(false);
     const [error, setError] = useState<string>('');
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
@@ -134,11 +162,9 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
     const {
         isRecording,
         hasPermission,
-        error: recordingError,
         audioBlob,
         startRecording,
         stopRecording,
-        resetRecording,
     } = useAudioRecorder();
 
     // Initialize configuration
@@ -148,7 +174,6 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
             if (propApiUrl) {
                 setApiUrl(propApiUrl);
                 setToken(propToken || ''); // Token is optional
-                setIsConfigured(true);
                 setUseSpeechAPI(false);
                 setError('');
                 return;
@@ -158,13 +183,11 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
                 setUseSpeechAPI(true);
-                setIsConfigured(true);
                 setError('');
                 return;
             }
 
             // No configuration and no Speech API support
-            setIsConfigured(false);
             setUseSpeechAPI(false);
             setError('No API configuration provided and Speech Recognition API is not supported in this browser.');
         };
@@ -209,7 +232,7 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
     // Test connection when configured with API
     useEffect(() => {
         const testConn = async () => {
-            if (isConfigured && !useSpeechAPI && apiUrl) {
+            if (!useSpeechAPI && apiUrl) {
                 try {
                     const isConnected = await testConnection(apiUrl, token || '');
                     setConnectionStatus(isConnected ? 'connected' : 'error');
@@ -220,7 +243,7 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
         };
 
         testConn();
-    }, [isConfigured, useSpeechAPI, apiUrl, token]);
+    }, [useSpeechAPI, apiUrl, token]);
 
     // Auto-transcribe when recording stops (API mode only)
     useEffect(() => {
@@ -286,42 +309,27 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
         }
     };
 
-    if (!isConfigured) {
-        return (
-            <div className={`konnektaro-audio-recorder-error ${className || ''}`}>
-                <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-                    <div className="text-center max-w-md">
-                        <div className="text-6xl mb-4">🎤</div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                            Konnektaro Audio Recorder
-                        </h1>
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-                            <p className="text-red-800 font-medium mb-2">Configuration Required</p>
-                            <p className="text-red-600 text-sm mb-3">{error}</p>
-                            <div className="text-sm text-red-600">
-                                <p className="mb-2">Provide configuration via props:</p>
-                                <ul className="list-disc list-inside space-y-1 text-left">
-                                    <li><code className="bg-red-100 px-1 rounded">apiUrl</code> (token is optional)</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                            <p className="mb-2">Example usage:</p>
-                            <pre className="bg-gray-100 p-2 rounded text-left text-xs overflow-x-auto">
-{`<KonnektaroAudioRecorder 
-  apiUrl="https://api.example.com" 
-  token="your-token"  // Optional
-/>`}
-              </pre>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="relative min-h-screen bg-gradient-to-b from-white to-blue-50 p-4">
+        <>
+            <style>
+                {`
+                    @keyframes ripple-fade {
+                        0% {
+                            transform: scale(0.8);
+                            opacity: 0.8;
+                        }
+                        50% {
+                            transform: scale(1.2);
+                            opacity: 0.4;
+                        }
+                        100% {
+                            transform: scale(1.5);
+                            opacity: 0;
+                        }
+                    }
+                `}
+            </style>
+            <div className="relative min-h-screen bg-gradient-to-b from-white to-blue-50 p-4">
 
             {/* Fixed center microphone with ripple effect */}
             <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
@@ -332,13 +340,23 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                         {(isRecording || isListening) && (
                             <>
                                 <div
-                                    className="absolute w-48 h-48 border-4 border-purple-400 rounded-full animate-ping opacity-60"></div>
+                                    className="absolute w-32 h-32 border-2 rounded-full animate-ping opacity-0"
+                                    style={{
+                                        borderColor: rippleColor,
+                                        animation: 'ripple-fade 2s ease-out infinite'
+                                    }}></div>
                                 <div
-                                    className="absolute w-64 h-64 border-4 border-purple-300 rounded-full animate-ping opacity-40"
-                                    style={{animationDelay: '0.3s'}}></div>
+                                    className="absolute w-40 h-40 border-2 rounded-full animate-ping opacity-0"
+                                    style={{
+                                        borderColor: rippleColor,
+                                        animation: 'ripple-fade 2s ease-out infinite 0.3s'
+                                    }}></div>
                                 <div
-                                    className="absolute w-80 h-80 border-4 border-purple-200 rounded-full animate-ping opacity-20"
-                                    style={{animationDelay: '0.6s'}}></div>
+                                    className="absolute w-48 h-48 border-2 rounded-full animate-ping opacity-0"
+                                    style={{
+                                        borderColor: rippleColor,
+                                        animation: 'ripple-fade 2s ease-out infinite 0.6s'
+                                    }}></div>
                             </>
                         )}
 
@@ -346,17 +364,19 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                         <button
                             onClick={handleMicrophoneClick}
                             disabled={isDisabled()}
-                            className={`
-              relative z-10 w-40 h-40 rounded-full transition-all duration-300 transform
-                           ${hasPermission === false || connectionStatus === 'error'
-
-                                ? 'bg-primary-60 shadow-md opacity-50 cursor-not-allowed'
-                                : 'bg-purple-500 shadow-md hover:shadow-lg active:scale-95'
-                            }
-            `}
+                            className="relative z-10 w-40 h-40 rounded-full transition-all duration-300 transform shadow-md hover:shadow-lg active:scale-95"
+                            style={{
+                                backgroundColor: isDisabled() 
+                                    ? disabledBackgroundColor 
+                                    : (isRecording || isListening) 
+                                        ? activeBackgroundColor 
+                                        : idleBackgroundColor,
+                                opacity: isDisabled() ? 0.5 : 1,
+                                cursor: isDisabled() ? 'not-allowed' : 'pointer'
+                            }}
                         >
-                            {/* Microphone Icon - Always White */}
-                            <div className="text-white text-6xl transition-all duration-300 justify-items-center">
+                            {/* Microphone Icon */}
+                            <div className="text-6xl transition-all duration-300 justify-items-center" style={{color: iconColor}}>
                                 {(isRecording || isListening) ? (
                                     // Recording/Listening state - microphone with waves
                                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-1/2 h-1/2 m-auto">
@@ -398,5 +418,6 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                 </div>
             </div>
         </div>
+        </>
     );
 };
