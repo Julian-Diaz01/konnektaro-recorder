@@ -77,14 +77,24 @@ export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls =
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
+          autoGainControl: true,
           sampleRate: 44100,
         },
       });
 
       audioChunksRef.current = [];
       
+      // Try different MIME types for better browser compatibility
+      let mimeType = 'audio/webm;codecs=opus';
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = 'audio/webm';
+        if (!MediaRecorder.isTypeSupported(mimeType)) {
+          mimeType = 'audio/mp4';
+        }
+      }
+      
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus',
+        mimeType,
       });
 
       mediaRecorderRef.current = mediaRecorder;
@@ -96,18 +106,35 @@ export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls =
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        setAudioBlob(audioBlob);
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         
-        // Create URL for playback
-        const url = URL.createObjectURL(audioBlob);
-        setAudioUrl(url);
+        // Log recording details for debugging
+        console.log('Recording stopped:', {
+          chunks: audioChunksRef.current.length,
+          totalSize: audioBlob.size,
+          duration: recordingTime,
+          mimeType
+        });
+        
+        // Only set audio blob if we have meaningful data
+        if (audioBlob.size > 0) {
+          setAudioBlob(audioBlob);
+          
+          // Create URL for playback
+          const url = URL.createObjectURL(audioBlob);
+          setAudioUrl(url);
+        } else {
+          console.warn('No audio data recorded');
+          setError('No audio data was recorded. Please try again.');
+        }
         
         // Stop all tracks
         stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorder.start(1000); // Collect data every second
+      // Start recording with smaller time slices for better responsiveness
+      // but not too small to avoid performance issues
+      mediaRecorder.start(250); // Collect data every 250ms
       setIsRecording(true);
       setRecordingTime(0);
       startTimer();
@@ -120,11 +147,25 @@ export const useAudioRecorder = (): AudioRecorderState & AudioRecorderControls =
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {
+      // Check if recording is too short (less than 0.5 seconds)
+      if (recordingTime < 0.5) {
+        console.warn('Recording too short, extending to minimum duration');
+        // Don't stop immediately, let it record for a bit longer
+        setTimeout(() => {
+          if (mediaRecorderRef.current && isRecording) {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+            stopTimer();
+          }
+        }, 500); // Wait 500ms more
+        return;
+      }
+      
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       stopTimer();
     }
-  }, [isRecording, stopTimer]);
+  }, [isRecording, recordingTime, stopTimer]);
 
   const resetRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {

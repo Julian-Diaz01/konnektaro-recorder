@@ -1,6 +1,6 @@
 {
   "name": "@konnektaro/speech-to-text",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "A React component library for speech-to-text conversion with dual-mode support (API mode + native browser Speech Recognition)",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",

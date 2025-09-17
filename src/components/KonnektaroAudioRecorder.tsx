@@ -287,8 +287,8 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (SpeechRecognition) {
                 const recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
+                recognition.continuous = true;  // Enable continuous recording
+                recognition.interimResults = true;  // Enable interim results for better UX
                 recognition.lang = 'en-US';
 
                 recognition.onstart = () => {
@@ -296,8 +296,23 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                 };
 
                 recognition.onresult = (event: SpeechRecognitionEvent) => {
-                    const transcript = event.results[0][0].transcript;
-                    onTranscriptionComplete?.(transcript);
+                    let finalTranscript = '';
+                    let interimTranscript = '';
+                    
+                    // Process all results
+                    for (let i = 0; i < event.results.length; i++) {
+                        const result = event.results[i];
+                        if (result.isFinal) {
+                            finalTranscript += result[0].transcript;
+                        } else {
+                            interimTranscript += result[0].transcript;
+                        }
+                    }
+                    
+                    // Only call onTranscriptionComplete with final results
+                    if (finalTranscript.trim()) {
+                        onTranscriptionComplete?.(finalTranscript.trim());
+                    }
                 };
 
                 recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
@@ -415,10 +430,9 @@ export const KonnektaroAudioRecorder: React.FC<KonnektaroAudioRecorderProps> = (
                     }
                 `}
             </style>
-            <div className="relative bg-gradient-to-b from-white to-blue-50 p-4">
-
+            <div className="m-[auto] bg-white">
             {/* Fixed center microphone with ripple effect */}
-            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
                 <div className="relative">
                     {/* Ripple Effect Container */}
                     <div className="relative flex items-center justify-center">

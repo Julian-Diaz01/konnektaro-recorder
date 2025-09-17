@@ -17,8 +17,6 @@ export const transcribeAudio = async (
     const formData = new FormData();
     formData.append('audio', audioBlob, `audio-${Date.now()}-${Math.floor(Math.random() * 1000).toString().padStart(2, '0')}.webm`);
 
-    console.log('Sending transcription request to:', apiUrl);
-    
     // Build headers object
     const headers: Record<string, string> = {
       'Content-Type': 'multipart/form-data',
@@ -34,13 +32,11 @@ export const transcribeAudio = async (
       timeout,
     });
 
-    console.log('Transcription response:', response.data);
 
     // Handle nested data structure
     const data = response.data.data || response.data;
     const transcription = data.transcription || data.text || '';
     
-    console.log('Extracted data:', data);
     console.log('Extracted transcription:', transcription);
 
     return {
